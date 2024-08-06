@@ -118,6 +118,7 @@ def test_ghidra():
         exit()
 
 def main() -> None:
+    print("This is an experimental version of V++. Currently, this script has limited functionality. Please check the repository for updates.")
     test_ghidra()
     pyhidra.start()
     with pyhidra.open_program(f"{sys.argv[1]}") as bin:
