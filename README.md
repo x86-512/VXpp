@@ -4,8 +4,6 @@ Currently, this project is very limited in functionality. The script only search
 
 How to run:
 - Install ghidra
-- Install requirements: ```
-  pip install pyhidra
-  ```
+- Install requirements: ```pip install pyhidra```
 - Load the file in ghidra
 - Run the script
