@@ -1,4 +1,4 @@
-# vfgadget-finder
+# V++
 
 This is a simple script that looks for usable vfgadgets in a COOP attack. COOP is an exploitation technique that bypasses advanced security mitigations like Intel CET. COOP involves injecting counterfeit objects into a program with different vtables with pointers to legitimate functions that can be chained to execute arbitrary code.
 
