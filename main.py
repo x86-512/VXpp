@@ -6,6 +6,12 @@ import jpype
 #Remember to add XFG option
 #To bypass xfg, find a virtual function with the same hash
 
+############NOTES ON XFG#################
+#Get the old virtual function's parameters and return type and search other functions for those same specs
+#functiondb.getReturnType()
+#functiondb.getParameters()
+
+
 #Doesn't work
 os.system("export GHIDRA_INSTALL_DIR=/usr/share/ghidra")
 #GHIDRA_INSTALL_DIR = os.getenv("GHIDRA_INSTALL_DIR")
@@ -23,8 +29,6 @@ def verify_jump_to_instruction(instructions, jump_target:int) -> bool:
         if jump_target==int(str(instr.getAddress()), 16):
             return True
     return False
-
-
 
 #Check to make sure the loop iterates
 
@@ -119,10 +123,13 @@ def is_mlg(instructions:list, addr_set) -> [bool, int]:
                         call_indexes.append(ind)
     
     call_addr = 0
+
+    #Is there a virtual method called?
     for i in call_indexes: #what about guard check?
         for ind, instr in enumerate(instructions_readable[i:], start=i):
             if len(instr.split(" ")) >0 and instr.split(" ")[0].lower()=="call":
                 for reg in call_regs:
+                    #Add an alternative to check if the function is being passed as a parameter and if there is a control flow guard check
                     if instr.split(" ")[1]==reg:
                         conditionals[0] = True
                         call_addr = int(str(instructions[ind].getAddress()), 16)
@@ -131,6 +138,8 @@ def is_mlg(instructions:list, addr_set) -> [bool, int]:
                         break
     jump_to = 0
     jump_address = 0
+
+    #Is the jump within the function?
     for ind, i in enumerate(instructions_readable):
         for j in jump_instructions:
             if i.split(" ")[0].lower()==j:
@@ -146,7 +155,6 @@ def is_mlg(instructions:list, addr_set) -> [bool, int]:
 
     #print(f"Call: {call_addr}")
     #print(f"Jump: {jump_to}")
-
     return [True if conditionals[0] and conditionals[1] and conditionals[2] else False, 0] #usability not added yet
 
 
@@ -183,21 +191,36 @@ def test_ghidra():
     #
     #If there is a jump instruction, if it is > than the function base and < than the call, continue
 
+def set_max_length() -> int:
+    max_len:int = 30
+    try:
+        max_len=int(sys.argv[-1])
+    except ValueError:
+        print("No instruction limit set, setting it to 30")
+    return max_len
+
 
 def main() -> None:
     test_ghidra()
+    max_len:int = set_max_length()
     pyhidra.start()
     with pyhidra.open_program(f"{sys.argv[1]}") as bin:
         program = bin.getCurrentProgram()
         manager = program.getFunctionManager()
         iterator = manager.getFunctions(True)
         func_list = []
-        print("\nFinding vfgadgets...\n")
+        print("\n[+] Finding vfgadgets...\n")
         while iterator.hasNext():
             func = iterator.next()
             #print(func.getName())
             #get_instruction_offset(program, func.getEntryPoint()) #func.getBody())
             instructions:list[str] = list(program.getListing().getInstructions(func.getBody(), 1))
+
+            #Saves a lot of time
+            if len(instructions)>max_len:
+                continue
+            #breakpoint()
+            #if len(instructions>)
             #print(func)
             #print(func.getEntryPoint()) #Search the data section for this
             #print(type(func.getEntryPoint()))
