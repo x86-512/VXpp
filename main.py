@@ -81,6 +81,7 @@ def instruction_ind_not_reg(instructions:list[str], inst:str) -> int:
     #If CFG is not met, the confidence level goes down
 def is_mlg(instructions:list, addr_set) -> [bool, int]:
     #Find the VTABLE where the start of the function base is mentioned
+
     instructions_readable = convert_to_str_list(instructions)
     if "ret" not in instructions_readable[-1].lower():
         return [False, 0]
@@ -124,18 +125,33 @@ def is_mlg(instructions:list, addr_set) -> [bool, int]:
     
     call_addr = 0
 
+    #print(call_indexes)
+    #print(vtable_indexes)
+    #print(instructions_readable)
+
     #Is there a virtual method called?
     for i in call_indexes: #what about guard check?
         for ind, instr in enumerate(instructions_readable[i:], start=i):
             if len(instr.split(" ")) >0 and instr.split(" ")[0].lower()=="call":
                 for reg in call_regs:
                     #Add an alternative to check if the function is being passed as a parameter and if there is a control flow guard check
-                    if instr.split(" ")[1]==reg:
+                    #Check if the dereference contains guard
+                    if instr.split(" ")[1]==reg or "guard" in instr: #Calls something dereferenced by a pointer
+                        #print("\n\nTRUE\n\n")
                         conditionals[0] = True
                         call_addr = int(str(instructions[ind].getAddress()), 16)
                         #print(int(str(instructions[ind].getAddress()), 16))
                         #print(f"Call before: {instructions[ind].getAddress()}")
                         break
+                    else:
+                        if len(instr.split(' '))==4:
+                            if instr.split(' ')[3][0:3]=="[0x": #Figure out how to get it to check for CFG
+                                #print("\n\nTRUE\n\n")
+                                conditionals[0] = True
+                                call_addr = int(str(instructions[ind].getAddress()), 16)
+                                #print(int(str(instructions[ind].getAddress()), 16))
+                                #print(f"Call before: {instructions[ind].getAddress()}")
+                                break
     jump_to = 0
     jump_address = 0
 
@@ -143,16 +159,30 @@ def is_mlg(instructions:list, addr_set) -> [bool, int]:
     for ind, i in enumerate(instructions_readable):
         for j in jump_instructions:
             if i.split(" ")[0].lower()==j:
-                if (jump_target:=int(i.split(" ")[1], 16))>=int("0x"+str(addr_set).split(',')[0][2:], 16) and int(i.split(" ")[1], 16)<=int("0x"+str(addr_set).split(' ')[1][1:-1], 16):
-                    conditionals[1] = True
-                    jump_address = int(str(instructions[ind].getAddress()), 16)
-                    jump_to = jump_target
+                #print("X")
+                #print(i)
+                #Try doing index of 0x up until you reach a space or ] or the end
+                #if len(i.split(' '))==2:
+                    #print(i.split(' ')[1][0:2]=='0x')
+                if len(i.split(' '))==2 and i.split(' ')[1][0:2]=='0x':
+                    #print("Y")
+                    # and '*' not in instr and '/' not in instr and '-' not in instr and '+' not in instr:
+                    #print(int(i.split(" ")[1], 16))
+                    #print(int("0x"+str(addr_set).split(',')[0][2:], 16))
+                    #print(int(i.split(" ")[1], 16)>=int("0x"+str(addr_set).split(',')[0][2:], 16))
+                    #print(int("0x"+str(addr_set).split(' ')[1].strip(']'), 16))
+                    if (jump_target:=int(i.split(" ")[1], 16))>=int("0x"+str(addr_set).split(',')[0][2:], 16) and jump_target<=int("0x"+str(addr_set).split(' ')[1].strip(']'), 16):
+                        #print("\n\nTRUE 2\n\n")
+                        conditionals[1] = True
+                        jump_address = int(str(instructions[ind].getAddress()), 16)
+                        jump_to = jump_target
 
 
     if conditionals[0] and conditionals[1] and jump_to!=0 and call_addr!=0 and call_addr>=jump_to and call_addr<jump_address and verify_jump_to_instruction(instructions, jump_to):
         conditionals[2] = True
         
 
+    #print(conditionals)
     #print(f"Call: {call_addr}")
     #print(f"Jump: {jump_to}")
     return [True if conditionals[0] and conditionals[1] and conditionals[2] else False, 0] #usability not added yet
@@ -212,6 +242,8 @@ def main() -> None:
         print("\n[+] Finding vfgadgets...\n")
         while iterator.hasNext():
             func = iterator.next()
+            #if not func.getName()=="FUN_1400011c0":
+            #    continue
             #print(func.getName())
             #get_instruction_offset(program, func.getEntryPoint()) #func.getBody())
             instructions:list[str] = list(program.getListing().getInstructions(func.getBody(), 1))
@@ -219,6 +251,7 @@ def main() -> None:
             #Saves a lot of time
             if len(instructions)>max_len:
                 continue
+            #print(func.getName())
             #breakpoint()
             #if len(instructions>)
             #print(func)
