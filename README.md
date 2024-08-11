@@ -7,5 +7,7 @@ Currently, this project only looks for main-loop gadgets, but I am planning on a
 How to run:
 - Install ghidra
 - Install requirements: ```pip install pyhidra```
-- Load the file in ghidra
 - Run the script
+
+Syntax:
+```python main.py yout_bin_name_here.exe max_vfgadget_length```
