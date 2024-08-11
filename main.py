@@ -10,6 +10,7 @@ import jpype
 #Get the old virtual function's parameters and return type and search other functions for those same specs
 #functiondb.getReturnType()
 #functiondb.getParameters()
+#Or find a hash map with the function hashes and find another function in there that has the same hash and give that as a suggestion.
 
 
 #Doesn't work
