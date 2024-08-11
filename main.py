@@ -11,6 +11,7 @@ import jpype
 #functiondb.getReturnType()
 #functiondb.getParameters()
 #Or find a hash map with the function hashes and find another function in there that has the same hash and give that as a suggestion.
+#Or find the hash of the vfgadget and what it calls, store it, and write another script to check for similar hashes
 
 
 #Doesn't work
