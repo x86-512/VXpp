@@ -16,8 +16,17 @@ jump_instructions:list[str] = ["jmp", "jne", "je", "jo", "jno", "js", "jns", "jz
 
 #Look for a virtual function calling other virtual functions in a loop, get its location in the vtable and get the vtable address
 #Pass a disassembled ghidra function in the argument
-def find_mlg(max_len:int) -> None:
-    pass
+
+#Check to make sure the jump is not offset from any instruction, so it will keep on executing the same stuff 
+def verify_jump_to_instruction(instructions, jump_target:int) -> bool:
+    for ind, instr in enumerate(instructions):
+        if jump_target==int(str(instr.getAddress()), 16):
+            return True
+    return False
+
+
+
+#Check to make sure the loop iterates
 
 def get_disassembly(program, func) -> None:
     if func is None:
@@ -130,7 +139,8 @@ def is_mlg(instructions:list, addr_set) -> [bool, int]:
                     jump_address = int(str(instructions[ind].getAddress()), 16)
                     jump_to = jump_target
 
-    if conditionals[0] and conditionals[1] and jump_to!=0 and call_addr!=0 and call_addr>=jump_to and call_addr<jump_address:
+
+    if conditionals[0] and conditionals[1] and jump_to!=0 and call_addr!=0 and call_addr>=jump_to and call_addr<jump_address and verify_jump_to_instruction(instructions, jump_to):
         conditionals[2] = True
         
 
@@ -182,7 +192,7 @@ def main() -> None:
         manager = program.getFunctionManager()
         iterator = manager.getFunctions(True)
         func_list = []
-        print("Finding vfgadgets...")
+        print("\nFinding vfgadgets...\n")
         while iterator.hasNext():
             func = iterator.next()
             #print(func.getName())
