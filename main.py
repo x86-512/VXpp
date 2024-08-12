@@ -138,7 +138,7 @@ def is_mlg(instructions:list, addr_set) -> [bool, int]:
                 for reg in call_regs:
                     #Add an alternative to check if the function is being passed as a parameter and if there is a control flow guard check
                     #Check if the dereference contains guard
-                    if instr.split(" ")[1]==reg or "guard" in instr: #Calls something dereferenced by a pointer
+                    if reg in instr[instr.find(" "):] or "guard" in instr: #Calls something dereferenced by a pointer
                         #print("\n\nTRUE\n\n")
                         conditionals[0] = True
                         call_addr = int(str(instructions[ind].getAddress()), 16)
