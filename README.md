@@ -10,4 +10,4 @@ How to run:
 - Run the script
 
 Syntax:
-```python main.py yout_bin_name_here.exe max_vfgadget_length```
+```python main.py your_bin_name_here.exe max_vfgadget_length```
