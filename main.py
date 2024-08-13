@@ -202,13 +202,13 @@ def is_mlg(instructions:list, addr_set) -> [bool, int]:
     #Check to make sure that the call is after the vtable function
     for i in call_indexes: #what about guard check?
         for ind, instr in enumerate(instructions_readable[i:], start=i):
+            #Check any xrefs of the function from a vtable
             if len(instr.split(" ")) >0 and instr.split(" ")[0].lower()=="call":
-                for reg in call_regs:
+                for reg in call_regs: #Also check modified_regs
                     #Add an alternative to check if the function is being passed as a parameter and if there is a control flow guard check
                     #Check if the dereference contains guard
-
-                    #test it for ax and see if AX was modified, either my modified_regs or call_regs
-                    if reg in instr[instr.find(' '):] or "guard" in instr: #Calls something dereferenced by a pointer
+                    if reg in instr[instr.find(' '):] or "guard" in instr: #Sometimes the register is directly called and modified without updating the dereference
+                        #Calls something dereferenced by a pointer
                         #print("\n\nTRUE\n\n")
 
                         #print(instructions[ind].getAddress())
