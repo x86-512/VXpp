@@ -145,8 +145,17 @@ def is_mlg(instructions:list, addr_set) -> [bool, int]:
                 modified_regs.append(to_set)#Isue
                 #print(f"Modified {modified_regs}")
                 vtable_indexes.append(ind)
+
     for i in vtable_indexes:
-        for ind, instr in enumerate(instructions_readable[i:], start=i):
+        #It should be in the next 6 instructions
+        #It should be a mov new_reg, [deref'd reg]
+        for ind, instr in enumerate(instructions_readable[i:i+6], start=i):
+            #print(instr.split(' ')[0])
+            if instr.split(' ')[0].lower()!="mov":
+                continue
+            #    print("Continuing: {instr}")
+            if ind>i+6:
+                break
             if '[' in instr and ']' in instr:
                 start_ind = instr.find("[")
                 end_ind = instr.find("]")
@@ -158,6 +167,7 @@ def is_mlg(instructions:list, addr_set) -> [bool, int]:
 
                 #breakpoint()
                 for modified_reg in modified_regs:
+                    #print(modified_reg)
                     if 'sp' in modified_reg.lower() or 'bp' in modified_reg.lower():
                         continue
                     #print(f"Current Reg: {modified_reg}")
@@ -172,8 +182,9 @@ def is_mlg(instructions:list, addr_set) -> [bool, int]:
                     elif modified_reg.lower() in deref_substr.lower():
                         #print("\n\n\nIT'S FINALLY TRUE :D\n\n\n")
                         #if len(instr[start_ind+1:end_ind])==3 and instr[start_ind+1:end_ind].lower()==modified_reg:
-                        call_regs.append(instr.split(" ")[1].split(",")[0])
+                        call_regs.append(instr.split(",")[0].split(" ")[-1]) #Appends qword
                         call_indexes.append(ind)
+                        #print(instr)
     
     call_addr = 0
 
@@ -188,6 +199,7 @@ def is_mlg(instructions:list, addr_set) -> [bool, int]:
     #print(instructions_readable)
 
     #Is there a virtual method called?
+    #Check to make sure that the call is after the vtable function
     for i in call_indexes: #what about guard check?
         for ind, instr in enumerate(instructions_readable[i:], start=i):
             if len(instr.split(" ")) >0 and instr.split(" ")[0].lower()=="call":
@@ -196,6 +208,9 @@ def is_mlg(instructions:list, addr_set) -> [bool, int]:
                     #Check if the dereference contains guard
                     if reg in instr[instr.find(' '):] or "guard" in instr: #Calls something dereferenced by a pointer
                         #print("\n\nTRUE\n\n")
+
+                        #print(instructions[ind].getAddress())
+                        #print(reg)
                         conditionals[0] = True
                         call_addr = int(str(instructions[ind].getAddress()), 16)
                         #print(int(str(instructions[ind].getAddress()), 16))
@@ -203,8 +218,8 @@ def is_mlg(instructions:list, addr_set) -> [bool, int]:
                         break
                     else:
                         if len(instr.split(' '))==4:
-                            if instr.split(' ')[3][0:3]=="[0x": #Figure out how to get it to check for CFG
-                                #print("\n\nTRUE\n\n")
+                            if instr.split(' ')[3][0:3]=="[0x" and "AX" in instructions_readable[ind-1]: #Figure out how to get it to check for CFG
+                                #print("\n\nTRUE2\n\n")
                                 conditionals[0] = True
                                 call_addr = int(str(instructions[ind].getAddress()), 16)
                                 #print(int(str(instructions[ind].getAddress()), 16))
@@ -306,7 +321,7 @@ def main() -> None:
             func = iterator.next()
             if func.isThunk():
                 continue
-            #if not func.getName()=="FUN_1400011c0":
+            #if str(func.getName()).lower()!="initialize_inherited_file_handles_nolock":
             #    continue
             #print(func.getName())
             #get_instruction_offset(program, func.getEntryPoint()) #func.getBody())
@@ -332,7 +347,7 @@ def main() -> None:
             #print(f"FUNC: {func.getBody()}")
             #print(instructions) #Need address range, also only gets code
             if (is_mlg(instructions, func.getBody())[0]):
-                print(f"Potential Main Loop Gadget found at: {func.getEntryPoint()}")
+                print(f"Potential Main Loop Gadget found at: {func.getEntryPoint()}, with the function name: {func.getName()}")
             #print(program.getListing().getCodeUnits(func.getBody())) #Need address range, also only gets code
             #print(get_disassembly(program, func))
         #print(f"PROGRAM: {program}")
