@@ -10,8 +10,6 @@ import jpype
 #Get the old virtual function's parameters and return type and search other functions for those same specs
 #functiondb.getReturnType()
 #functiondb.getParameters()
-#Or find a hash map with the function hashes and find another function in there that has the same hash and give that as a suggestion.
-#Or find the hash of the vfgadget and what it calls, store it, and write another script to check for similar hashes
 
 
 #Doesn't work
@@ -81,6 +79,9 @@ def instruction_ind_not_reg(instructions:list[str], inst:str) -> int:
     #5. (Planned) Check if the gadget matches the parameter and return type of another function for XFG
     #Disqualifiers: No ret, function too long, 
     #If CFG is not met, the confidence level goes down
+
+
+#BUG: the MLG must be the first entry of the vtable
 def is_mlg(instructions:list, addr_set) -> [bool, int]:
     #Find the VTABLE where the start of the function base is mentioned
 
@@ -100,35 +101,82 @@ def is_mlg(instructions:list, addr_set) -> [bool, int]:
     call_regs:list = []
     vtable_indexes = []
     call_indexes = []
+    #For the modified_reg, the first instance needs to be just in [] of length 3 
     for ind, instr in enumerate(instructions_readable):
+        if 'sp' in instr.lower() or 'bp' in instr.lower():
+            continue
         start_ind = instr.find("[")
         end_ind = instr.find("]")
         if start_ind>-1 and end_ind>-1:
-            drefin_instr:str = instr[start_ind+1:end_ind]
-            dref_sp:list[str] = drefin_instr.split(" ")
             deref_markers = 0
+            drefin_instr:str = instr[start_ind:end_ind+1]
+            if len(drefin_instr)==5 and len(drefin_instr.strip('[').strip(']')):
+                deref_markers+=1
+            #print(drefin_instr)
+            dref_sp:list[str] = drefin_instr.split(" ")
             for dind, deref in enumerate(dref_sp):
-                if len(deref)==3 and '0x' not in deref: #esp+0x3
-                    deref_markers +=1
-                elif '*' in deref:
-                    deref_markers += 1
-            if deref_markers==2:
-                modified_regs.append(instr.split(" ")[1].split(",")[0].lower())
+                if len(deref.strip('[').strip(']'))==3 and deref[0]=='[' and deref[-1]==']' '0x' not in deref: #esp+0x3
+                    #print(deref.strip('[').strip(']'))
+                    #print('TRUE 1')
+                    pass
+                    #deref_markers +=1
+                #elif '*' in deref:
+                    #print("TRUE 2")
+                    #deref_markers += 1
+            if deref_markers==1:
+                #If length of split==2, then get anything within []
+                #Get the first word after [ within [] on the last of split
+                #modified_regs.append(instr.split(" ")[1].split(",")[0].lower())#Isue
+                first_seg = instr.split(",")[0].lower()
+                to_set = first_seg.split(' ')[1]
+                #print(to_set)
+                #if '[' in first_seg:
+                #    within_brackets = first_seg[first_seg.find('['):]
+                #    within_no_brackets = within_brackets.strip('[').strip(']')
+                    #to_set = within_no_brackets.split(' ')[0]
+                modified_regs.append(to_set)#Isue
+                #print(f"Modified {modified_regs}")
                 vtable_indexes.append(ind)
     for i in vtable_indexes:
         for ind, instr in enumerate(instructions_readable[i:], start=i):
-            start_ind = instr.find("[")
-            end_ind = instr.find("]")
-            if start_ind>-1 and end_ind>-1:
+            if '[' in instr and ']' in instr:
+                start_ind = instr.find("[")
+                end_ind = instr.find("]")
+
+                deref_substr = instr[start_ind+1:end_ind] #Problem 2
+                #print(deref_substr)
+                #print(deref_substr)
+                #print(modified_regs)
+
+                #breakpoint()
                 for modified_reg in modified_regs:
-                    if len(instr[start_ind+1:end_ind])==3 and instr[start_ind+1:end_ind].lower()==modified_reg:
+                    if 'sp' in modified_reg.lower() or 'bp' in modified_reg.lower():
+                        continue
+                    #print(f"Current Reg: {modified_reg}")
+                    #print(f"deref_substr: {deref_substr}")
+                    #check the first split to see if it is a modified reegister
+                    if len(deref_substr.split(' '))==3:
+                        if modified_reg in deref_substr.split(' ')[0].lower() and '+' in deref_substr.split(' ')[1].lower() and deref_substr.split(' ')[2].lower()[0:2]=='0x' and int(deref_substr.split(' ')[2].lower(), 16)%4==0:
+                            call_regs.append(instr.split(" ")[1].split(",")[0])
+                            call_indexes.append(ind)
+                            #print(call_regs)
+                            #breakpoint()
+                    elif modified_reg.lower() in deref_substr.lower():
+                        #print("\n\n\nIT'S FINALLY TRUE :D\n\n\n")
+                        #if len(instr[start_ind+1:end_ind])==3 and instr[start_ind+1:end_ind].lower()==modified_reg:
                         call_regs.append(instr.split(" ")[1].split(",")[0])
                         call_indexes.append(ind)
     
     call_addr = 0
 
-    #print(call_indexes)
-    #print(vtable_indexes)
+    #print(f"Call: {call_indexes}")
+
+    #if len(call_indexes)>0:
+    #    print("Call index")
+    #if len(call_regs)>0:
+    #    print("Call regs")
+    #print(f"Vtable Reference: {vtable_indexes}")
+
     #print(instructions_readable)
 
     #Is there a virtual method called?
@@ -138,7 +186,7 @@ def is_mlg(instructions:list, addr_set) -> [bool, int]:
                 for reg in call_regs:
                     #Add an alternative to check if the function is being passed as a parameter and if there is a control flow guard check
                     #Check if the dereference contains guard
-                    if reg in instr[instr.find(" "):] or "guard" in instr: #Calls something dereferenced by a pointer
+                    if reg in instr[instr.find(' '):] or "guard" in instr: #Calls something dereferenced by a pointer
                         #print("\n\nTRUE\n\n")
                         conditionals[0] = True
                         call_addr = int(str(instructions[ind].getAddress()), 16)
@@ -184,6 +232,8 @@ def is_mlg(instructions:list, addr_set) -> [bool, int]:
         conditionals[2] = True
         
 
+        #if conditionals[0]==True:
+        #print("conditionals 0 is true")
     #print(conditionals)
     #print(f"Call: {call_addr}")
     #print(f"Jump: {jump_to}")
@@ -233,6 +283,7 @@ def set_max_length() -> int:
 
 
 def main() -> None:
+    print("\n[+] Analyzing Binary...\n")
     test_ghidra()
     max_len:int = set_max_length()
     pyhidra.start()
@@ -251,9 +302,16 @@ def main() -> None:
             instructions:list[str] = list(program.getListing().getInstructions(func.getBody(), 1))
 
             #Saves a lot of time
+
+            #if str(func.getName()).lower()!="fun_1400011e0":
+            #    continue
+
             if len(instructions)>max_len:
                 continue
+            #if str(func.getName()).lower()!="fun_100717d5":
+            #    continue
             #print(func.getName())
+
             #breakpoint()
             #if len(instructions>)
             #print(func)
