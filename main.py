@@ -130,8 +130,9 @@ def is_mlg(instructions:list, addr_set, bin) -> [bool, int]:
         return [False, 0]
     if instruction_ind_reg(instructions_readable, 'CALL')==-1: #Make it contain a register
         return [False, 0]        
-    if get_call_count(instructions_readable)!=1:
-        return [False, 0]
+    #if get_call_count(instructions_readable)!=1:
+    #    return [False, 0]
+
     #1: Is there a VTABLE call?
     #2: Is the jump after the call and does it go before the call, is it within the function?
     #3 (Bonus): Is the call protected by CFG?
