@@ -206,6 +206,8 @@ def is_mlg(instructions:list, addr_set) -> [bool, int]:
                 for reg in call_regs:
                     #Add an alternative to check if the function is being passed as a parameter and if there is a control flow guard check
                     #Check if the dereference contains guard
+
+                    #test it for ax and see if AX was modified, either my modified_regs or call_regs
                     if reg in instr[instr.find(' '):] or "guard" in instr: #Calls something dereferenced by a pointer
                         #print("\n\nTRUE\n\n")
 
