@@ -12,3 +12,6 @@ How to run:
 
 Syntax:
 ```python main.py your_bin_name_here.exe max_vfgadget_length```
+
+Test Cases:
+Microsoft Photo Viewer: PhotoViewer.dll, 3 ML-Gadgets found
