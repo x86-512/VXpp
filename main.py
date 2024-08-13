@@ -302,7 +302,10 @@ def main() -> None:
         func_list = []
         print("\n[+] Finding vfgadgets...\n")
         while iterator.hasNext():
+            #FunctionDB object
             func = iterator.next()
+            if func.isThunk():
+                continue
             #if not func.getName()=="FUN_1400011c0":
             #    continue
             #print(func.getName())
