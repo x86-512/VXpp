@@ -86,6 +86,8 @@ def is_mlg(instructions:list, addr_set) -> [bool, int]:
     #Find the VTABLE where the start of the function base is mentioned
 
     instructions_readable = convert_to_str_list(instructions)
+    if len(instructions_readable)==0:
+        return [False, 0]
     if "ret" not in instructions_readable[-1].lower():
         return [False, 0]
     if instruction_ind_reg(instructions_readable, 'CALL')==-1: #Make it contain a register
