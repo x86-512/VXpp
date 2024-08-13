@@ -51,6 +51,13 @@ def get_cfg_functions(listing, iterator, bin)->[list, str]:
 
 cfg_list = []
 
+def get_call_count(instructions_readable:list[str]):
+    call_count:int = 0
+    for instr in instructions_readable:
+        if "CALL" in instr.upper():
+            call_count+=1
+    return call_count
+
 #Look for a virtual function calling other virtual functions in a loop, get its location in the vtable and get the vtable address
 #Pass a disassembled ghidra function in the argument
 
@@ -123,7 +130,8 @@ def is_mlg(instructions:list, addr_set, bin) -> [bool, int]:
         return [False, 0]
     if instruction_ind_reg(instructions_readable, 'CALL')==-1: #Make it contain a register
         return [False, 0]        
-
+    if get_call_count(instructions_readable)!=1:
+        return [False, 0]
     #1: Is there a VTABLE call?
     #2: Is the jump after the call and does it go before the call, is it within the function?
     #3 (Bonus): Is the call protected by CFG?
@@ -263,6 +271,14 @@ def is_mlg(instructions:list, addr_set, bin) -> [bool, int]:
                                 #print(int(str(instructions[ind].getAddress()), 16))
                                 #print(f"Call before: {instructions[ind].getAddress()}")
                                 break
+                if not conditionals[0] and '[' in instr and ']' in instr:
+                    for reg in modified_regs:
+                        start_sub = instr.find('[')
+                        end_sub = instr.find(']')
+                        deref_substr = instr[start_sub+1:end_sub]
+                        if reg in deref_substr:
+                            conditionals[0] = True
+                            call_addr = int(str(instructions[ind].getAddress()), 16)
     jump_to = 0
     jump_address = 0
 
