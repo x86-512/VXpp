@@ -218,7 +218,8 @@ def is_mlg(instructions:list, addr_set) -> [bool, int]:
                         break
                     else:
                         if len(instr.split(' '))==4:
-                            if instr.split(' ')[3][0:3]=="[0x" and "AX" in instructions_readable[ind-1]: #Figure out how to get it to check for CFG
+                            #Could be a variant of mov
+                            if instr.split(' ')[3][0:3]=="[0x" and "AX" in instructions_readable[ind-1].split(',')[0] and "MOV" in instructions_readable[ind-1].split(' ')[0]: #Figure out how to get it to check for CFG
                                 #print("\n\nTRUE2\n\n")
                                 conditionals[0] = True
                                 call_addr = int(str(instructions[ind].getAddress()), 16)
