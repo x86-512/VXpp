@@ -105,8 +105,11 @@ def is_mlg(instructions:list, addr_set) -> [bool, int]:
     for ind, instr in enumerate(instructions_readable):
         if 'sp' in instr.lower() or 'bp' in instr.lower():
             continue
-        start_ind = instr.find("[")
-        end_ind = instr.find("]")
+        if len(instr.split(','))<=1:
+            continue
+        right_instr = instr.split(',')[1] 
+        start_ind = right_instr.find("[")
+        end_ind = right_instr.find("]")
         if start_ind>-1 and end_ind>-1:
             deref_markers = 0
             drefin_instr:str = instr[start_ind:end_ind+1]
@@ -127,8 +130,11 @@ def is_mlg(instructions:list, addr_set) -> [bool, int]:
                 #If length of split==2, then get anything within []
                 #Get the first word after [ within [] on the last of split
                 #modified_regs.append(instr.split(" ")[1].split(",")[0].lower())#Isue
-                first_seg = instr.split(",")[0].lower()
+                first_seg = instr.split(",")[0].lower() 
                 to_set = first_seg.split(' ')[1]
+                if 'word' in to_set:
+                    print(f"WORD almost added to register in {instr}")
+                    continue
                 #print(to_set)
                 #if '[' in first_seg:
                 #    within_brackets = first_seg[first_seg.find('['):]
