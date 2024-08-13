@@ -7,6 +7,7 @@ Currently, this project only looks for main-loop gadgets, but I am planning on a
 How to run:
 - Install ghidra
 - Install requirements: ```pip install pyhidra```
+- Set your GHIDRA_INSTALL_DIR environment variable to your Ghidra installation location
 - Run the script
 
 Syntax:
