@@ -20,6 +20,37 @@ common_vtable_registers:list[str] = ["ax", "cx", "dx", "bx"]
 
 jump_instructions:list[str] = ["jmp", "jne", "je", "jo", "jno", "js", "jns", "jz", "jnz", "jb", "jnae", "jnb", "jc", "jae", "jnc", "jbe", "jna", "ja", "jnbe", "jl", "jnge", "jge", "jnl", "jle", "jg", "jnle", "jp", "jpe", "jnp", "jpo", "jcxz", "jecxz"]
 
+
+def dereference_pointer(listing, genericAddress):
+    pointer_size = genericAddress.getPointerSize()
+    print(pointer_size)
+    print(listing.getDataAt(genericAddress))
+    breakpoint()
+    address = ""
+    address += ""
+    for i in range(pointer_size-1):
+        address+=0
+
+
+def get_cfg_functions(listing, iterator, bin)->[list, str]:
+    cfg_list = []
+    cfg_reference_list = ""
+    while iterator.hasNext():
+        func = iterator.next()
+        if "guard_" in str(func.getName()).lower():
+            cfg_list.append(func.getEntryPoint())
+            #print(type(func.getEntryPoint()))
+            #print(func.getEntryPoint())
+            #print(bin.getReferencesTo(func.getEntryPoint()))
+            cfg_reference_list += str(bin.getReferencesTo(func.getEntryPoint()))
+            #print(listing.getDefinedDataAt(func.getEntryPoint()))
+            #dereference_pointer(listing, func.getEntryPoint())
+            #breakpoint()
+    #print(cfg_reference_list)
+    return [cfg_list, cfg_reference_list]
+
+cfg_list = []
+
 #Look for a virtual function calling other virtual functions in a loop, get its location in the vtable and get the vtable address
 #Pass a disassembled ghidra function in the argument
 
@@ -82,7 +113,7 @@ def instruction_ind_not_reg(instructions:list[str], inst:str) -> int:
 
 
 #BUG: the MLG must be the first entry of the vtable
-def is_mlg(instructions:list, addr_set) -> [bool, int]:
+def is_mlg(instructions:list, addr_set, bin) -> [bool, int]:
     #Find the VTABLE where the start of the function base is mentioned
 
     instructions_readable = convert_to_str_list(instructions)
@@ -221,8 +252,12 @@ def is_mlg(instructions:list, addr_set) -> [bool, int]:
                     else:
                         if len(instr.split(' '))==4:
                             #Could be a variant of mov
-                            if instr.split(' ')[3][0:3]=="[0x" and "AX" in instructions_readable[ind-1].split(',')[0] and "MOV" in instructions_readable[ind-1].split(' ')[0]: #Figure out how to get it to check for CFG
+
+                            cfg_reference_list = get_cfg_functions(bin.getCurrentProgram().getListing(), bin.getCurrentProgram().getFunctionManager().getFunctions(True), bin)[1]
+                            if instr.split(' ')[3][0:3]=="[0x" and instr[instr.find('[')+3:instr.find(']')] in cfg_reference_list:#and "AX" in instructions_readable[ind-1].split(',')[0] and "MOV" in instructions_readable[ind-1].split(' ')[0]: #Figure out how to get it to check for CFG
                                 #print("\n\nTRUE2\n\n")
+                                address = int(instr[instr.find('[')+1:instr.find(']')], 16)
+                                #print(instr[instr.find('[')+1:instr.find(']')])
                                 conditionals[0] = True
                                 call_addr = int(str(instructions[ind].getAddress()), 16)
                                 #print(int(str(instructions[ind].getAddress()), 16))
@@ -266,7 +301,6 @@ def is_mlg(instructions:list, addr_set) -> [bool, int]:
     return [True if conditionals[0] and conditionals[1] and conditionals[2] else False, 0] #usability not added yet
 
 
-
 def test_ghidra():
     if len(sys.argv)<2:
         print("Invalid arguments\nTry: python {} binary_name_here.exe".format(__file__.split("/")[-1]))
@@ -307,26 +341,33 @@ def set_max_length() -> int:
         print("No instruction limit set, setting it to 30")
     return max_len
 
-
 def main() -> None:
     print("\n[+] Analyzing Binary...\n")
     test_ghidra()
     max_len:int = set_max_length()
     pyhidra.start()
     with pyhidra.open_program(f"{sys.argv[1]}") as bin:
+        #print(type(bin))
+        #Try bin.find()
+        #Try bin.getBytes(adddress, pointersize)
+        #IK, getReferencesTo()
         program = bin.getCurrentProgram()
+        #print(type(program.getListing()))
+        #breakpoint()
         manager = program.getFunctionManager()
         iterator = manager.getFunctions(True)
         func_list = []
         print("\n[+] Finding vfgadgets...\n")
         while iterator.hasNext():
+            #print("NEXT")
             #FunctionDB object
             func = iterator.next()
+
+            #print(func.getName())
             if func.isThunk():
                 continue
             #if str(func.getName()).lower()!="initialize_inherited_file_handles_nolock":
             #    continue
-            #print(func.getName())
             #get_instruction_offset(program, func.getEntryPoint()) #func.getBody())
             instructions:list[str] = list(program.getListing().getInstructions(func.getBody(), 1))
 
@@ -349,7 +390,7 @@ def main() -> None:
             #print(program.getListing().getInstructionAt(func.getEntryPoint())) #Need address range, also only gets code
             #print(f"FUNC: {func.getBody()}")
             #print(instructions) #Need address range, also only gets code
-            if (is_mlg(instructions, func.getBody())[0]):
+            if (is_mlg(instructions, func.getBody(), bin)[0]):
                 print(f"Potential Main Loop Gadget found at: {func.getEntryPoint()}, with the function name: {func.getName()}")
             #print(program.getListing().getCodeUnits(func.getBody())) #Need address range, also only gets code
             #print(get_disassembly(program, func))
