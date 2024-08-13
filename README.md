@@ -14,4 +14,4 @@ Syntax:
 ```python main.py your_bin_name_here.exe max_vfgadget_length```
 
 Test Cases:
-Microsoft Photo Viewer: PhotoViewer.dll, 3 ML-Gadgets found
+Microsoft Photos: PhotoViewer.dll, 9 potential ML-Gadgets found, 2 of which are usable
