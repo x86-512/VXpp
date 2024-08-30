@@ -375,7 +375,7 @@ def main() -> None:
         iterator = manager.getFunctions(True)
         func_list = []
         print("\n[+] Finding vfgadgets...\n")
-        while iterator.hasNext():
+        while iterator.hasNext(): #Instead of finding all the functions, get all of the objects, then get the functions in the vtables and go through it that way, then revert back to this if that fails.
             #print("NEXT")
             #FunctionDB object
             func = iterator.next()
