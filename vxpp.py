@@ -117,6 +117,16 @@ def instruction_ind_not_reg(instructions:list[str], inst:str) -> int:
     #5. (Planned) Check if the gadget matches the parameter and return type of another function for XFG
     #Disqualifiers: No ret, function too long, 
     #If CFG is not met, the confidence level goes down
+def is_arithg(instructions:list, addr_set, bin): 
+    instructions_readable = convert_to_str_list(instructions)
+    allowed_instrs:list[str] = ["mov", "add", "sub", "nop"]
+    if len(instructions_readable)<4: #Prevent out of bounds errors
+        return False
+    for ind, instr in enumerate(instructions_readable[3:-2]):
+        for valid in allowed_instrs:
+            if valid.lower() not in instr.lower():
+                return False
+    return True
 
 
 #BUG: the MLG must be the first entry of the vtable
@@ -350,6 +360,38 @@ def test_ghidra():
     #
     #If there is a jump instruction, if it is > than the function base and < than the call, continue
 
+def get_vfuncs(program):
+    manager = program.getFunctionManager()
+    s_table = program.getSymbolTable()
+    virtual_functions = []
+    virtual_tables = []
+    virtual_offsets = []
+    for s in s_table.getAllSymbols(True):
+        if 'vtable' in s.getName().lower():
+            addie = s.getAddress()
+            vtable_address = s.getAddress()
+            pointer_size:int = addie.getPointerSize()
+            addie.addWrap(pointer_size)
+            nav_vtables = True
+            offset = 0x0
+            while nav_vtables:
+                vtable_data = program.getListing().getDataAt(addie).getValue()
+                if vtable_data==None:
+                    nav_vtables = False
+                    break
+                virtual_functions.append(vtable_data)
+                virtual_tables.append(vtable_address)
+                virtual_offsets.append(hex(offset))
+                offset+=pointer_size
+                addie = addie.addWrap(pointer_size)
+    return [virtual_functions, virtual_tables, virtual_offsets]
+
+def is_virtual(virtual_functions, func):
+    for vf_ind, vfunc in enumerate(virtual_functions):
+        if str(func.getEntryPoint()).lower() in str(vfunc).lower():
+            return True, vf_ind
+    return False, -1
+
 def set_max_length() -> int:
     max_len:int = 30
     try:
@@ -363,114 +405,33 @@ def main() -> None:
     test_ghidra()
     max_len:int = set_max_length()
     pyhidra.start()
-    with pyhidra.open_program(f"{sys.argv[1]}") as bin:
-        #print(type(bin))
-        #Try bin.find()
-        #Try bin.getBytes(adddress, pointersize)
-        #IK, getReferencesTo()
+    with pyhidra.open_program(f"{sys.argv[1]}") as bin: 
         program = bin.getCurrentProgram()
-        #print(type(program.getListing()))
-        #breakpoint()
+        vfuncs_list = get_vfuncs(program)
         manager = program.getFunctionManager()
         iterator = manager.getFunctions(True)
-        s_table = program.getSymbolTable()
-        virtual_functions = []
-        virtual_tables = []
-        virtual_offsets = []
-        for s in s_table.getAllSymbols(True):
-            if 'vtable' in s.getName().lower():
-                #print("VTABLE")
-                #print(s.getAddress())
-
-                #print(type(program.getListing().getDataAt(s.getAddress())))
-
-                #print(type((s.getAddress())))
-                addie = s.getAddress()
-                vtable_address = s.getAddress()
-
-                pointer_size = addie.getPointerSize()
-
-
-                #print(addie)
-                addie.addWrap(pointer_size)
-                #print(addie)
-                #addie = (addie.addWrap(pointer_size))
-                #print(addie)
-                #print(s.getAddress().addWrap(pointer_size))
-                #breakpoint()
-
-        #print(vtable_data)
-                nav_vtables = True
-                offset = 0x0
-                while nav_vtables:
-                    #print(nav_vtables)
-
-                    vtable_data = program.getListing().getDataAt(addie).getValue()
-                    if vtable_data==None:
-                        nav_vtables = False
-                        break
-                    virtual_functions.append(vtable_data)
-                    virtual_tables.append(vtable_address)
-                    virtual_offsets.append(hex(offset))
-                    offset+=pointer_size
-                    addie = addie.addWrap(pointer_size)
-                    #print(addie)
-                    #print(vtable_data)
-                #print(type(virtual_functions[0]))
-                #print(virtual_functions)
-                #virtual_functions = virtual_functions.remove(0x0)
-                #print(virtual_functions)
-
-                #print(program.getListing().getDataAt(s.getAddress().addWrap(pointer_size*0)))
-                #print(program.getListing().getDataAt(s.getAddress().addWrap(pointer_size*5)).getValue())
+        virtual_functions = vfuncs_list[0]
+        virtual_tables = vfuncs_list[1]
+        virtual_offsets = vfuncs_list[2]
 
         func_list = []
         print("\n[+] Finding vfgadgets...\n")
         while iterator.hasNext(): #Instead of finding all the functions, get all of the objects, then get the functions in the vtables and go through it that way, then revert back to this if that fails.
-            #print("NEXT")
-            #FunctionDB object
             func = iterator.next()
-            #print(str(func.getEntryPoint()))
-
-            #print(func.getName())
             if func.isThunk():
                 continue
-            #if str(func.getName()).lower()!="initialize_inherited_file_handles_nolock":
-            #    continue
-            #get_instruction_offset(program, func.getEntryPoint()) #func.getBody())
             instructions:list[str] = list(program.getListing().getInstructions(func.getBody(), 1))
-
-            #Saves a lot of time
-
-            #if str(func.getName()).lower()!="fun_1400011e0":
-            #    continue
-
             if len(instructions)>max_len:
                 continue
-            #if str(func.getName()).lower()!="fun_100717d5":
-            #    continue
-            #print(func.getName())
-
-            #breakpoint()
-            #if len(instructions>)
-            #print(func)
-            #print(func.getEntryPoint()) #Search the data section for this
-            #print(type(func.getEntryPoint()))
-            #print(program.getListing().getInstructionAt(func.getEntryPoint())) #Need address range, also only gets code
-            #print(f"FUNC: {func.getBody()}")
-            #print(instructions) #Need address range, also only gets code
-            is_vfunc = False
-            for vf_ind, vfunc in enumerate(virtual_functions):
-                if str(func.getEntryPoint()).lower() in str(vfunc).lower():
-                    is_vfunc = True
-                    #print("Main Loop Gadget Found")
-            if (is_mlg(instructions, func.getBody(), bin)[0]) and is_vfunc:
+            is_vfunc, vf_ind = is_virtual(virtual_functions, func)
+            is_loop:bool = is_mlg(instructions, func.getBody(), bin)[0]
+            is_arith = is_arithg(instructions, func.getBody(), bin)
+            if is_loop and is_vfunc:
                 print(f"Main Loop Gadget found at function address: {func.getEntryPoint()}, with the name: {func.getName()} in vtable: {virtual_tables[vf_ind]} at vtable offset: {virtual_offsets[vf_ind]}")
-            elif (is_mlg(instructions, func.getBody(), bin)[0]):
+            elif is_loop and not is_vfunc:
                 print(f"Potential Main Loop Gadget found at: {func.getEntryPoint()}, with the function name: {func.getName()}")
-            #print(program.getListing().getCodeUnits(func.getBody())) #Need address range, also only gets code
-            #print(get_disassembly(program, func))
-        #print(f"PROGRAM: {program}")
+            elif is_arith and is_vfunc:
+                print(f"Potential Arithmetic gadget found at: {func.getEntryPoint()}")
 
 if __name__=="__main__":
     main()
