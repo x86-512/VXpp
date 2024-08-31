@@ -18,7 +18,7 @@ class B{
     A *subclass[3];
     B() {
         for(int i= 0;i<3; i++) {
-            subclass[i];
+            subclass[i] = new A();
         }
     }
     virtual void incA() {
