@@ -4,7 +4,7 @@ This is a simple script that looks for usable vfgadgets in a Counterfeit-Object 
 
 Due to the limitaions of the required software, parts of the script may not work as intended.
 
-How to run:
+# How to run (IMPORTANT):
 - Install ghidra
 - Install requirements: ```pip install pyhidra```
 - Set your GHIDRA_INSTALL_DIR environment variable to your Ghidra installation location
@@ -12,6 +12,16 @@ How to run:
 
 Syntax:
 ```python main.py your_bin_name_here.exe max_vfgadget_length```
+
+Here is a list of VFGadgets that are supported:
+
+| VFGadget | Support | 
+| --- | --- |
+| ML-G | Supported |
+| ARITH-G | Supported |
+| ML-ARG-G | Coming Soon |
+| Invoker | Coming Soon |
+| W-G and variants | Planned |
 
 # Test Cases:
 Microsoft Photos (PhotoViewer.dll): 9 potential MainLoop-Gadgets found, 2 of which are usable
