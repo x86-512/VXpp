@@ -22,6 +22,7 @@ Here is a list of VFGadgets that are supported:
 | ML-ARG-G | Coming Soon |
 | Invoker | Coming Soon |
 | W-G and variants | Planned |
+| LOAD-R64-G | in the distant future |
 
 # Test Cases:
 Microsoft Photos (PhotoViewer.dll): 9 potential MainLoop-Gadgets found, 2 of which are usable
