@@ -35,7 +35,7 @@ class B{
     }
     virtual void incAx() {
         for(int i= 0;i<3; i++) {
-            subclass[i]->dek(i, 4, 3, 2, 1);
+            subclass[i]->dekx(i, 4, 3, 2, 1);
         }
     }
 };
