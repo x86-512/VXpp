@@ -33,9 +33,9 @@ class B{
             subclass[i]->dek();
         }
     }
-    virtual void incAx() {
+    virtual void incAx(int x) {
         for(int i= 0;i<3; i++) {
-            subclass[i]->dekx(i, 4, 3, 2, 1);
+            subclass[i]->dekx(i, x, 3, 2, 1);
         }
     }
 };
@@ -43,5 +43,7 @@ class B{
 int main() {
     B *b = new B();
     b->incA();
+    int x = 5;
+    b->incAx(x);
     return 0;
 }
