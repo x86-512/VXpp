@@ -10,6 +10,13 @@ class A{
     virtual void dek() {
         counter--;
     }
+    virtual void dekx(int x, int y, int z, int al, int be) {
+        counter-=x;
+        counter-=y;
+        counter-=z;
+        counter-=al;
+        counter-=be;
+    }
 };
 
 class B{
@@ -26,7 +33,11 @@ class B{
             subclass[i]->dek();
         }
     }
-
+    virtual void incAx() {
+        for(int i= 0;i<3; i++) {
+            subclass[i]->dek(i, 4, 3, 2, 1);
+        }
+    }
 };
 
 int main() {
