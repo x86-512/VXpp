@@ -19,10 +19,10 @@ Here is a list of VFGadgets that are supported:
 | --- | --- | --- |
 | ML-G | Supported | Loops through an object's encapsulatd classes and calls a virtual method of the subclass. | 
 | ARITH-G | Supported | Does a simple mathematical operation to a field. |
+| LOAD-R64-G | In Development | Loads an argument into a register (meant for x64) |
 | ML-ARG-G | Coming Soon | Loops through argument-loading functions |
 | Invoker | Coming Soon | Invokes an API function |
 | W-G and variants | Planned | Writes to memory |
-| LOAD-R64-G | in the distant future | Loads an argument into a register (meant for x64) |
 
 # Test Cases:
 Microsoft Photos (PhotoViewer.dll): 9 potential MainLoop-Gadgets found, 2 of which are usable
