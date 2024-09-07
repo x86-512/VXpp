@@ -15,6 +15,8 @@ This script is designed for Python 3.10 or later
 Syntax:
 ```python main.py your_bin_name_here.exe max_vfgadget_length```
 
+# Features
+
 Here is a list of VFGadgets that are supported:
 
 | VFGadget | Support |  Description |
