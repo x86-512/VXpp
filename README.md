@@ -9,6 +9,8 @@ Due to the limitaions of the required software, parts of the script may not work
 - Install requirements: ```pip install -r requirements.txt```
 - Set your GHIDRA_INSTALL_DIR environment variable to your Ghidra installation location
 - Run the script
+  
+This script is designed for Python 3.10 or later
 
 Syntax:
 ```python main.py your_bin_name_here.exe max_vfgadget_length```
