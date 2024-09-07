@@ -6,7 +6,7 @@ Due to the limitaions of the required software, parts of the script may not work
 
 # How to run (IMPORTANT):
 - Install ghidra
-- Install requirements: ```pip install pyhidra```
+- Install requirements: ```pip install -r requirements.txt```
 - Set your GHIDRA_INSTALL_DIR environment variable to your Ghidra installation location
 - Run the script
 
