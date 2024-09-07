@@ -1,1 +1,2 @@
-pyhidra==1.2.0
+pyhidra>=1.2.0
+JPype1>=1.5.0
