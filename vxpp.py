@@ -20,6 +20,7 @@ common_vtable_registers:list[str] = ["ax", "cx", "dx", "bx"]
 
 jump_instructions:list[str] = ["jmp", "jne", "je", "jo", "jno", "js", "jns", "jz", "jnz", "jb", "jnae", "jnb", "jc", "jae", "jnc", "jbe", "jna", "ja", "jnbe", "jl", "jnge", "jge", "jnl", "jle", "jg", "jnle", "jp", "jpe", "jnp", "jpo", "jcxz", "jecxz"]
 
+x64_argument_regs = ["rdx", "r8", "r9"]
 
 def dereference_pointer(listing, genericAddress):
     pointer_size = genericAddress.getPointerSize()
@@ -119,7 +120,7 @@ def instruction_ind_not_reg(instructions:list[str], inst:str) -> int:
     #If CFG is not met, the confidence level goes down
 def is_arithg(instructions:list, addr_set, bin): 
     instructions_readable = convert_to_str_list(instructions)
-    allowed_instrs:list[str] = ["mov", "add", "sub", "nop"]
+    allowed_instrs:list[str] = ["mov", "lea", "add", "sub", "nop"]
     if len(instructions_readable)<4: #Prevent out of bounds errors
         return False
     for ind, instr in enumerate(instructions_readable[3:-2]):
@@ -127,6 +128,31 @@ def is_arithg(instructions:list, addr_set, bin):
             if valid.lower() not in instr.lower():
                 return False
     return True
+
+def is_r64_g(instructions:list, addr_set):
+    instructions_readable = convert_to_str_list(instructions)
+    if len(instructions_readable)==0:
+        return [False, ""]
+    if "ret" not in instructions_readable[-1].lower():
+        return [False, ""]
+    register_count = [0, 0, 0]
+    for reg_ind, reg in enumerate(x64_argument_regs):
+        for instr in instructions_readable:
+            if reg in instr:
+                register_count[reg_ind]+=1
+    important_reg_count = sum(1 for x in register_count if x>0)
+    if important_reg_count!=1:
+        return [False, ""]
+    ireg = 0
+    for i, count in register_count:
+        if i!=0:
+            ireg = i
+    creg = x64_argument_regs[ireg]
+    for instruction in instructions_readable:
+        if "mov" in instruction.split(' ')[0].lower() and creg in instruction.split(' ')[1] and '[' in instruction:
+            return [True, creg]
+    return [False, ""]
+            
 
 
 #BUG: the MLG must be the first entry of the vtable
@@ -196,6 +222,7 @@ def is_mlg(instructions:list, addr_set, bin) -> [bool, int]:
                 #print(f"Modified {modified_regs}")
                 vtable_indexes.append(ind)
 
+    deref_inds = []
     for i in vtable_indexes:
         #It should be in the next 6 instructions
         #It should be a mov new_reg, [deref'd reg]
@@ -211,6 +238,7 @@ def is_mlg(instructions:list, addr_set, bin) -> [bool, int]:
                 end_ind = instr.find("]")
 
                 deref_substr = instr[start_ind+1:end_ind] #Problem 2
+                deref_ind = ind
                 #print(deref_substr)
                 #print(deref_substr)
                 #print(modified_regs)
@@ -227,6 +255,7 @@ def is_mlg(instructions:list, addr_set, bin) -> [bool, int]:
                         if modified_reg in deref_substr.split(' ')[0].lower() and '+' in deref_substr.split(' ')[1].lower() and deref_substr.split(' ')[2].lower()[0:2]=='0x' and int(deref_substr.split(' ')[2].lower(), 16)%4==0:
                             call_regs.append(instr.split(" ")[1].split(",")[0])
                             call_indexes.append(ind)
+                            deref_inds.append(deref_ind)
                             #print(call_regs)
                             #breakpoint()
                     elif modified_reg.lower() in deref_substr.lower():
@@ -234,6 +263,7 @@ def is_mlg(instructions:list, addr_set, bin) -> [bool, int]:
                         #if len(instr[start_ind+1:end_ind])==3 and instr[start_ind+1:end_ind].lower()==modified_reg:
                         call_regs.append(instr.split(",")[0].split(" ")[-1]) #Appends qword
                         call_indexes.append(ind)
+                        deref_inds.append(deref_ind)
                         #print(instr)
     
     call_addr = 0
@@ -426,12 +456,17 @@ def main() -> None:
             is_vfunc, vf_ind = is_virtual(virtual_functions, func)
             is_loop:bool = is_mlg(instructions, func.getBody(), bin)[0]
             is_arith = is_arithg(instructions, func.getBody(), bin)
+            loader_specs = is_r64_g(instructions, func.getBody())
+            is_r64_loader = loader_specs[0]
+            loaded_reg = loader_specs[1]
             if is_loop and is_vfunc:
                 print(f"Main Loop Gadget found at function address: {func.getEntryPoint()}, with the name: {func.getName()} in vtable: {virtual_tables[vf_ind]} at vtable offset: {virtual_offsets[vf_ind]}")
             elif is_loop and not is_vfunc:
                 print(f"Potential Main Loop Gadget found at: {func.getEntryPoint()}, with the function name: {func.getName()}")
             elif is_arith and is_vfunc:
                 print(f"Potential Arithmetic gadget found at: {func.getEntryPoint()}")
+            elif is_r64_loader:
+                print(f"Potential register loader gadget for {loaded_reg} found at: {func.getEntryPoint()}")
 
 if __name__=="__main__":
     main()
