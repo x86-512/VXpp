@@ -40,9 +40,6 @@ def get_cfg_functions(listing, iterator, bin)->[list, str]:
         func = iterator.next()
         if "guard_" in str(func.getName()).lower():
             cfg_list.append(func.getEntryPoint())
-            #print(type(func.getEntryPoint()))
-            #print(func.getEntryPoint())
-            #print(bin.getReferencesTo(func.getEntryPoint()))
             cfg_reference_list += str(bin.getReferencesTo(func.getEntryPoint()))
             #print(listing.getDefinedDataAt(func.getEntryPoint()))
             #dereference_pointer(listing, func.getEntryPoint())
