@@ -150,9 +150,6 @@ def is_r64_g(instructions:list, addr_set):
             return [True, creg]
     return [False, ""]
             
-
-
-#BUG: the MLG must be the first entry of the vtable
 def is_mlg(instructions:list, addr_set, bin) -> [bool, int]:
     #Find the VTABLE where the start of the function base is mentioned
 
@@ -202,21 +199,12 @@ def is_mlg(instructions:list, addr_set, bin) -> [bool, int]:
                     #print("TRUE 2")
                     #deref_markers += 1
             if deref_markers==1:
-                #If length of split==2, then get anything within []
-                #Get the first word after [ within [] on the last of split
-                #modified_regs.append(instr.split(" ")[1].split(",")[0].lower())#Isue
                 first_seg = instr.split(",")[0].lower() 
                 to_set = first_seg.split(' ')[1]
                 if 'word' in to_set:
                     print(f"WORD almost added to register in {instr}")
                     continue
-                #print(to_set)
-                #if '[' in first_seg:
-                #    within_brackets = first_seg[first_seg.find('['):]
-                #    within_no_brackets = within_brackets.strip('[').strip(']')
-                    #to_set = within_no_brackets.split(' ')[0]
                 modified_regs.append(to_set)#Isue
-                #print(f"Modified {modified_regs}")
                 vtable_indexes.append(ind)
 
     deref_inds = []
@@ -236,18 +224,10 @@ def is_mlg(instructions:list, addr_set, bin) -> [bool, int]:
 
                 deref_substr = instr[start_ind+1:end_ind] #Problem 2
                 deref_ind = ind
-                #print(deref_substr)
-                #print(deref_substr)
-                #print(modified_regs)
-
-                #breakpoint()
                 for modified_reg in modified_regs:
                     #print(modified_reg)
                     if 'sp' in modified_reg.lower() or 'bp' in modified_reg.lower():
                         continue
-                    #print(f"Current Reg: {modified_reg}")
-                    #print(f"deref_substr: {deref_substr}")
-                    #check the first split to see if it is a modified reegister
                     if len(deref_substr.split(' '))==3:
                         if modified_reg in deref_substr.split(' ')[0].lower() and '+' in deref_substr.split(' ')[1].lower() and deref_substr.split(' ')[2].lower()[0:2]=='0x' and int(deref_substr.split(' ')[2].lower(), 16)%4==0:
                             call_regs.append(instr.split(" ")[1].split(",")[0])
@@ -264,18 +244,6 @@ def is_mlg(instructions:list, addr_set, bin) -> [bool, int]:
                         #print(instr)
     
     call_addr = 0
-
-    #print(f"Call: {call_indexes}")
-
-    #if len(call_indexes)>0:
-    #    print("Call index")
-    #if len(call_regs)>0:
-    #    print("Call regs")
-    #print(f"Vtable Reference: {vtable_indexes}")
-
-    #print(instructions_readable)
-
-    #Is there a virtual method called?
     #Check to make sure that the call is after the vtable function
     for i in call_indexes: #what about guard check?
         for ind, instr in enumerate(instructions_readable[i:], start=i):
@@ -330,14 +298,7 @@ def is_mlg(instructions:list, addr_set, bin) -> [bool, int]:
                 #if len(i.split(' '))==2:
                     #print(i.split(' ')[1][0:2]=='0x')
                 if len(i.split(' '))==2 and i.split(' ')[1][0:2]=='0x':
-                    #print("Y")
-                    # and '*' not in instr and '/' not in instr and '-' not in instr and '+' not in instr:
-                    #print(int(i.split(" ")[1], 16))
-                    #print(int("0x"+str(addr_set).split(',')[0][2:], 16))
-                    #print(int(i.split(" ")[1], 16)>=int("0x"+str(addr_set).split(',')[0][2:], 16))
-                    #print(int("0x"+str(addr_set).split(' ')[1].strip(']'), 16))
                     if (jump_target:=int(i.split(" ")[1], 16))>=int("0x"+str(addr_set).split(',')[0][2:], 16) and jump_target<=int("0x"+str(addr_set).split(' ')[1].strip(']'), 16):
-                        #print("\n\nTRUE 2\n\n")
                         conditionals[1] = True
                         jump_address = int(str(instructions[ind].getAddress()), 16)
                         jump_to = jump_target
@@ -345,13 +306,7 @@ def is_mlg(instructions:list, addr_set, bin) -> [bool, int]:
 
     if conditionals[0] and conditionals[1] and jump_to!=0 and call_addr!=0 and call_addr>=jump_to and call_addr<jump_address and verify_jump_to_instruction(instructions, jump_to):
         conditionals[2] = True
-        
 
-        #if conditionals[0]==True:
-        #print("conditionals 0 is true")
-    #print(conditionals)
-    #print(f"Call: {call_addr}")
-    #print(f"Jump: {jump_to}")
     return [True if conditionals[0] and conditionals[1] and conditionals[2] else False, 0] #usability not added yet
 
 
