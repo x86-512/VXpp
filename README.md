@@ -10,10 +10,9 @@ Here is a list of VFGadgets that are supported:
 
 | VFGadget | Support |  Description |
 | --- | --- | --- |
-| ML-G | Supported | Loops through an object's encapsulatd classes and calls a virtual method of the subclass | 
+| ML-G and Variants | Supported | Loops through an object's encapsulatd classes and calls a virtual method of the subclass | 
 | ARITH-G | Supported | Does a simple mathematical operation to a field |
 | LOAD-R64-G | Supported | Loads an argument into a register (meant for x64) |
-| ML-ARG-G | Coming Soon | Loops through argument-loading functions |
 | Invoker | Coming Soon | Invokes an API function |
 | W-G and variants | Planned | Writes to memory |
 
