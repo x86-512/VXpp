@@ -13,7 +13,7 @@ Here is a list of VFGadgets that are supported:
 | ML-G and Variants | Supported | Loops through an object's encapsulatd classes and calls a virtual method of the subclass | 
 | ARITH-G | Supported | Does a simple mathematical operation to a field |
 | LOAD-R64-G | Supported | Loads an argument into a register (meant for x64) |
-| Invoker | Coming Soon | Invokes an API function |
+| Invoker | Supported | Invokes an API function |
 | W-G and variants | Planned | Writes to memory |
 
 # Bypasses
