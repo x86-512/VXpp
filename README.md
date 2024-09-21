@@ -23,6 +23,7 @@ Here is a list of VFGadgets that are supported:
 | Intel CET | Bypassed | Uses shadow stacks to detect IP overwrites and checks branches to validate a call target. |
 | Windows CFG | Bypassed | Validates the destination of a call target. |
 | Windows XFG | Limited | Validates the parameters and return type destination of a call target via hashes. This script marks hashes of some functions. |
+| VTGuard | Limited | This script prints the VTable offset of the function if it is found to be in a VTable. |
 
 # How to run:
 - Install ghidra
