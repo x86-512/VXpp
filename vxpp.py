@@ -20,7 +20,7 @@ common_vtable_registers:list[str] = ["ax", "cx", "dx", "bx"]
 
 jump_instructions:list[str] = ["jmp", "jne", "je", "jo", "jno", "js", "jns", "jz", "jnz", "jb", "jnae", "jnb", "jc", "jae", "jnc", "jbe", "jna", "ja", "jnbe", "jl", "jnge", "jge", "jnl", "jle", "jg", "jnle", "jp", "jpe", "jnp", "jpo", "jcxz", "jecxz"]
 
-x64_argument_regs = ["rdx", "r8", "r9"]
+x64_argument_regs = ["rcx", "rdx", "r8", "r9"]
 
 def dereference_pointer(listing, genericAddress):
     pointer_size = genericAddress.getPointerSize()
@@ -380,7 +380,7 @@ def is_mlg(instructions:list, addr_set, bin) -> [bool, int]:
     #print(f"Jump: {jump_to}")
     return [True if conditionals[0] and conditionals[1] and conditionals[2] else False, 0, call_hash] #usability not added yet
 
-def is_inv_g(instructions:list, addr_set, bin):
+def is_inv_g_strict(instructions:list, addr_set, bin):
 
     instructions_readable = convert_to_str_list(instructions)
     if len(instructions_readable)==0:
@@ -520,9 +520,48 @@ def is_inv_g(instructions:list, addr_set, bin):
                             call_addr = int(str(instructions[ind].getAddress()), 16)
     return [True if conditionals[0] else False, 0, call_hash] #usability not added yet
 
+def is_inv_g_general(instructions:list, addr_set, bin):
+    instructions_readable = convert_to_str_list(instructions)
+    conditionals= [False]
+    if len(instructions_readable)==0:
+        return [False, 0, "NULL"]
+    if "ret" not in instructions_readable[-1].lower():
+        return [False, 0, "NULL"]
+    if instruction_ind_reg(instructions_readable, 'CALL')==-1: #Make it contain a register
+        return [False, 0, "NULL"]        
+    call_hash="NULL"
+    for ind, instr in enumerate(instructions_readable):
+        #Check any xrefs of the function from a vtable
+        if len(instr.split(" ")) >0 and instr.split(" ")[0].lower()=="call":
+            if 'x' in instr[instr.find(' '):] or 'r' in instr[instr.find(' '):] or "guard" in instr: #Sometimes the register is directly called and modified without updating the dereference
+                #Calls something dereferenced by a pointer
+                conditionals[0] = True
+                call_hash = check_xfg(instructions_readable, ind)
+                break
+            else:
+                if len(instr.split(' '))==4:
+                    #Could be a variant of mov
+                    cfg_reference_list = get_cfg_functions(bin.getCurrentProgram().getListing(), bin.getCurrentProgram().getFunctionManager().getFunctions(True), bin)[1]
+                    if instr.split(' ')[3][0:3]=="[0x" and instr[instr.find('[')+3:instr.find(']')] in cfg_reference_list:#Remove the last and if needed
+                        address = int(instr[instr.find('[')+1:instr.find(']')], 16)
+                        conditionals[0] = True
+                        call_hash = check_xfg(instructions_readable, ind)
+                        break
+    return [True if conditionals[0] else False, 0, call_hash] #usability not added yet
+
+def is_inv_g(instructions, addr_set, bin):
+    returnable = is_inv_g_strict(instructions, addr_set, bin)
+    returnable.append(True)
+    if not returnable[0]:
+        returnable = is_inv_g_general(instructions, addr_set, bin)
+        returnable.append(False)
+    return returnable
+
 def test_ghidra():
     if len(sys.argv)<2:
         print("Invalid arguments\nTry: python {} binary_name_here.exe".format(__file__.split("/")[-1]))
+        print("Syntax: python3 file.py binary max_gadget_len arguments")
+        print("Possible Arguments\nt - Include thunk functions\ni - Less strict invoker vfgadgets\n")
         exit()
     try:
         with open(f"{sys.argv[1]}", 'r') as file:
@@ -623,9 +662,13 @@ def main() -> None:
         func_list = []
         print("\n[+] Finding vfgadgets...\n")
         gadgets_found = False
+        try:
+            args = sys.argv[3]
+        except IndexError:
+            args = ""
         while iterator.hasNext(): #Instead of finding all the functions, get all of the objects, then get the functions in the vtables and go through it that way, then revert back to this if that fails.
             func = iterator.next()
-            if func.isThunk():
+            if func.isThunk() and not "t" in args:
                 continue
             instructions:list[str] = list(program.getListing().getInstructions(func.getBody(), 1))
             if len(instructions)>max_len:
@@ -658,7 +701,10 @@ def main() -> None:
             invoker_data = is_inv_g(instructions, func.getBody(), bin)
             is_invoker = invoker_data[0]
             xfg_hash = invoker_data[2]
+            is_vtable = invoker_data[3]
             if is_invoker:
+                if not 'i' in args and not is_vtable:
+                    continue
                 if is_vfunc:
                     print(f"Invoker Gadget found at function address: {func.getEntryPoint()}, with the name: {func.getName()} in vtable: {virtual_tables[vf_ind]} at vtable offset: {virtual_offsets[vf_ind]}")
                 else:
