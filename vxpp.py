@@ -10,6 +10,7 @@ import jpype
 #Get the old virtual function's parameters and return type and search other functions for those same specs
 #functiondb.getReturnType()
 #functiondb.getParameters()
+#Add xfg hashing function
 
 
 #Doesn't work
@@ -175,6 +176,7 @@ def check_xfg(instructions:list[str], call_ind:int)->str:
 
 
 #BUG: the MLG must be the first entry of the vtable
+# Check for general loop gadgets in general, check if it is coming from a dispatch table or smth
 def is_mlg(instructions:list, addr_set, bin) -> [bool, int]:
     #Find the VTABLE where the start of the function base is mentioned
 
