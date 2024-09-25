@@ -1,7 +1,7 @@
 import pyhidra
 import sys
 import os
-import jpype
+import jpype #Could remove
 
 #Remember to add XFG option
 #To bypass xfg, find a virtual function with the same hash
