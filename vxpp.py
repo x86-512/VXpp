@@ -237,7 +237,6 @@ def is_mlg(instructions:list, addr_set, bin) -> [bool, int]:
                 #    within_no_brackets = within_brackets.strip('[').strip(']')
                     #to_set = within_no_brackets.split(' ')[0]
                 modified_regs.append(to_set)#Isue
-                #print(f"Modified {modified_regs}")
                 vtable_indexes.append(ind)
 
     deref_inds = []
