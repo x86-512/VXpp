@@ -256,11 +256,7 @@ def is_mlg(instructions:list, addr_set, bin) -> [bool, int]:
 
                 deref_substr = instr[start_ind+1:end_ind] #Problem 2
                 deref_ind = ind
-                #print(deref_substr)
-                #print(deref_substr)
-                #print(modified_regs)
 
-                #breakpoint()
                 for modified_reg in modified_regs:
                     #print(modified_reg)
                     if 'sp' in modified_reg.lower() or 'bp' in modified_reg.lower():
