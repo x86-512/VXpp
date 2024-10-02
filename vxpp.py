@@ -229,7 +229,6 @@ def is_mlg(instructions:list, addr_set, bin) -> [bool, int]:
                 if 'word' in to_set:
                     print(f"WORD almost added to register in {instr}")
                     continue
-                #print(to_set)
                 #if '[' in first_seg:
                 #    within_brackets = first_seg[first_seg.find('['):]
                 #    within_no_brackets = within_brackets.strip('[').strip(']')
