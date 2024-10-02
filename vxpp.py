@@ -163,8 +163,6 @@ def check_xfg(instructions:list[str], call_ind:int)->str:
     if call_ind>len(instructions) or call_ind-4<0:
         return "NULL"
     for ind, instr in enumerate(instructions[call_ind-4:call_ind], start=call_ind-4):
-        #print(len(instr.split(' ')))
-        #print(instr)
         if len(instr.split(' '))!=2 or len(instr.split(','))!=2:
             continue
         if "mov" in instr.lower() and "r10" in instr.lower() and len(instr.split(',')[1])>10:
