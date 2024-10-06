@@ -37,5 +37,8 @@ Syntax:
 ```python main.py your_bin_name_here.exe max_vfgadget_length```
 
 # Test Cases:
-Microsoft Photos (PhotoViewer.dll): 9 potential MainLoop-Gadgets found, 2 of which are usable
-![Photo Viewer Results](photoviewer_test_1.png)
+Microsoft Photos (PhotoViewer.dll): 9 potential MainLoop-Gadgets found
+![Photo Viewer Results](test_images/photoviewer_test_1.png)
+
+Google Chrome (chrome_elf.dll): 2 Invoker Gadgets found
+![Google Chrome Results](test_images/chrome_elf.png)
