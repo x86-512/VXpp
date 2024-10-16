@@ -277,14 +277,6 @@ def is_mlg(instructions:list, addr_set, bin) -> [bool, int]:
     
     call_addr = 0
 
-    #print(f"Call: {call_indexes}")
-
-    #if len(call_indexes)>0:
-    #    print("Call index")
-    #if len(call_regs)>0:
-    #    print("Call regs")
-    #print(f"Vtable Reference: {vtable_indexes}")
-
     #print(instructions_readable)
 
     #Is there a virtual method called?
