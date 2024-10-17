@@ -22,8 +22,8 @@ These VFGadgets work for both COOP and LOP.
 | --- | --- | --- |
 | Intel CET | Bypassed | This feature uses shadow stacks to detect IP overwrites and checks branches to validate a call target. |
 | Windows CFG | Bypassed | This feature validates the destination of a call target. |
+| VTGuard | Bypassed | To bypass, simply use LOP. |
 | Windows XFG | Very Limited | This Feature validates the parameters and return type destination of a call target via hashes. This script marks hashes of some functions. |
-| VTGuard | Bypassed (use LOP) | To bypass, this script prints the VTable offset of the function if it is found to be in a VTable. |
 
 # How to run:
 - Install ghidra
