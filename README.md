@@ -36,7 +36,7 @@ This script is designed for Python 3.10 or later
 Syntax:
 ```python3 vxpp.py your_bin_name_here.exe max_vfgadget_length```
 
-# Test Cases:
+# Examples:
 Microsoft Photos (PhotoViewer.dll): 9 potential MainLoop-Gadgets found
 ![Photo Viewer Results](test_images/photoviewer_test_1.png)
 
