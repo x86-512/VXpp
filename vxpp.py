@@ -215,10 +215,6 @@ def is_mlg(instructions:list, addr_set, bin) -> [bool, int]:
                     #print(deref.strip('[').strip(']'))
                     #print('TRUE 1')
                     pass
-                    #deref_markers +=1
-                #elif '*' in deref:
-                    #print("TRUE 2")
-                    #deref_markers += 1
             if deref_markers==1:
                 #If length of split==2, then get anything within []
                 #Get the first word after [ within [] on the last of split
