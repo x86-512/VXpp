@@ -212,8 +212,6 @@ def is_mlg(instructions:list, addr_set, bin) -> [bool, int]:
             dref_sp:list[str] = drefin_instr.split(" ")
             for dind, deref in enumerate(dref_sp):
                 if len(deref.strip('[').strip(']'))==3 and deref[0]=='[' and deref[-1]==']' '0x' not in deref: #esp+0x3
-                    #print(deref.strip('[').strip(']'))
-                    #print('TRUE 1')
                     pass
             if deref_markers==1:
                 #If length of split==2, then get anything within []
