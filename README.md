@@ -1,6 +1,5 @@
 # VX++
 
-![Google Chrome VFGadgets](test_images/chrome_elf.png)
 <div align="center">
   <img src="test_images/chrome_elf.png" alt="Google Chrome VFGadgets"/>
 </div><br>
