@@ -1,4 +1,4 @@
-# Virtual Xploiter++
+# Virtual Xploiter++ (VX++)
 
 <div align="center">
   <img src="test_images/chrome_elf.png" alt="Google Chrome VFGadgets"/>
