@@ -1,6 +1,9 @@
 # VX++
 
-![Google Chrome Results](test_images/chrome_elf.png)<br>
+![Google Chrome VFGadgets](test_images/chrome_elf.png)
+<div align="center">
+  <img src="test_images/chrome_elf.png" alt="Google Chrome VFGadgets" width="400" />
+</div><br>
 This is a simple script that looks for usable vfgadgets in a Counterfeit-Object Oriented Programming (COOP) or a Loop Oriented Programming (LOP) attack. COOP is an exploitation technique that bypasses advanced security mitigations like Intel CET. COOP involves injecting counterfeit objects into a program with different vtables with pointers to legitimate functions that can be chained to execute arbitrary code. LOP involves overwriting a dispatch table with pointers to LOP gadgets. A looper loops through the overwritten table to execute gadgets. This script is also a free alternative to Uf0's idapython script so you don't have to buy IDA Pro to use Idapython.
 
 # Features
