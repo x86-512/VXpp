@@ -251,8 +251,6 @@ def is_mlg(instructions:list, addr_set, bin) -> [bool, int]:
                     #print(modified_reg)
                     if 'sp' in modified_reg.lower() or 'bp' in modified_reg.lower():
                         continue
-                    #print(f"Current Reg: {modified_reg}")
-                    #print(f"deref_substr: {deref_substr}")
                     #check the first split to see if it is a modified reegister
                     if len(deref_substr.split(' '))==3:
                         if modified_reg in deref_substr.split(' ')[0].lower() and '+' in deref_substr.split(' ')[1].lower() and deref_substr.split(' ')[2].lower()[0:2]=='0x' and int(deref_substr.split(' ')[2].lower(), 16)%4==0:
