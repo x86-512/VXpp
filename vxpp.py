@@ -117,28 +117,40 @@ def is_arithg(instructions:list, addr_set, bin):
                 working_instr = True
     return working_instr
 
+"""
+r64 loader gadget:
+    #1: Mov instruction to a 64-bit instruction, loads a dereferenced address
+Disqualifiers: No ret, too long
+"""
 def is_r64_g(instructions:list, addr_set):
     instructions_readable = convert_to_str_list(instructions)
+    
     if len(instructions_readable)==0:
         return [False, ""]
+        
     if "ret" not in instructions_readable[-1].lower():
         return [False, ""]
+        
     register_count = [0, 0, 0]
     for reg_ind, reg in enumerate(x64_argument_regs):
         for instr in instructions_readable:
             if reg in instr:
                 register_count[reg_ind]+=1
+                
     important_reg_count = sum(1 for x in register_count if x>0)
     if important_reg_count!=1:
         return [False, ""]
+        
     ireg = 0
     for i, count in register_count:
         if i!=0:
             ireg = i
+            
     creg = x64_argument_regs[ireg]
     for instruction in instructions_readable:
         if "mov" in instruction.split(' ')[0].lower() and creg in instruction.split(' ')[1] and '[' in instruction:
             return [True, creg]
+            
     return [False, ""]
             
 
@@ -158,7 +170,7 @@ ML-G Criteria:
     #2: Is the jump after the call and does it go before the call, is it within the function?
     #3: Is the call protected by CFG?
     
-# Check for general loop gadgets in general, check if it is coming from a dispatch table or smth
+#Check for loop gadgets in general, check if it is coming from a dispatch table or VTable
 """
 def is_mlg(instructions:list, addr_set, bin) -> [bool, int]:
     #Find the VTABLE where the start of the function base is mentioned
@@ -262,6 +274,7 @@ def is_mlg(instructions:list, addr_set, bin) -> [bool, int]:
                                 call_addr = int(str(instructions[ind].getAddress()), 16)
                                 call_hash = check_xfg(instructions_readable, ind)
                                 break
+                                
                 if not conditionals[0] and '[' in instr and ']' in instr:
                     for reg in modified_regs:
                         start_sub = instr.find('[')
@@ -293,7 +306,8 @@ def is_mlg(instructions:list, addr_set, bin) -> [bool, int]:
 INV-G (Strict) Criteria:
     #1: Is there a VTABLE call?
     #2: Is the jump after the call and does it go before the call, is it within the function?
-    #3 (Bonus): Is the call protected by CFG?
+    #3: Is the call protected by CFG?
+Disqualifiers: No ret, too long
 """
 def is_inv_g_strict(instructions:list, addr_set, bin):
 
@@ -412,7 +426,14 @@ def is_inv_g_strict(instructions:list, addr_set, bin):
                             conditionals[0] = True
                             call_addr = int(str(instructions[ind].getAddress()), 16)
     return [True if conditionals[0] else False, 0, call_hash] #usability not added yet
-
+    
+"""
+INV-G (Strict) Criteria:
+    #1: Is there a VTABLE call?
+    #2: Is the jump after the call and does it go before the call, is it within the function?
+    #3: Is the call protected by CFG?
+Disqualifiers: No ret, too long
+"""
 def is_inv_g_general(instructions:list, addr_set, bin):
     instructions_readable = convert_to_str_list(instructions)
     conditionals= [False]
@@ -442,6 +463,9 @@ def is_inv_g_general(instructions:list, addr_set, bin):
                         break
     return [True if conditionals[0] else False, 0, call_hash] #usability not added yet
 
+"""
+Type of invoker gadget based on system argument
+"""
 def is_inv_g(instructions, addr_set, bin):
     returnable = is_inv_g_strict(instructions, addr_set, bin)
     returnable.append(True)
