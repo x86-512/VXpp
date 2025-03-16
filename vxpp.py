@@ -27,10 +27,6 @@ def get_cfg_functions(listing, iterator, bin)->[list, str]:
         if "guard_" in str(func.getName()).lower():
             cfg_list.append(func.getEntryPoint())
             cfg_reference_list += str(bin.getReferencesTo(func.getEntryPoint()))
-            #print(listing.getDefinedDataAt(func.getEntryPoint()))
-            #dereference_pointer(listing, func.getEntryPoint())
-            #breakpoint()
-    #print(cfg_reference_list)
     return [cfg_list, cfg_reference_list]
 
 cfg_list = []
@@ -42,17 +38,18 @@ def get_call_count(instructions_readable:list[str]):
             call_count+=1
     return call_count
 
+"""
 #Look for a virtual function calling other virtual functions in a loop, get its location in the vtable and get the vtable address
 #Pass a disassembled ghidra function in the argument
-
 #Check to make sure the jump is not offset from any instruction, so it will keep on executing the same stuff 
+#Check to make sure the loop iterates
+"""
 def verify_jump_to_instruction(instructions, jump_target:int) -> bool:
     for ind, instr in enumerate(instructions):
         if jump_target==int(str(instr.getAddress()), 16):
             return True
     return False
 
-#Check to make sure the loop iterates
 
 def get_disassembly(program, func) -> None:
     if func is None:
