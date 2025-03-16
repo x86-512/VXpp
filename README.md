@@ -37,7 +37,7 @@ These VFGadgets work for both COOP and LOP.
 This script is designed for Python 3.10 or later
 
 Syntax:
-```python3 vxpp.py your_bin_name_here.exe max_vfgadget_length```
+```python3 vxpp.py <your_binary_path_here> <max_vfgadget_length> <arguments>```
 
 # Examples:
 Microsoft Photos (PhotoViewer.dll): 9 potential MainLoop-Gadgets found
