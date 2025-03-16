@@ -90,14 +90,16 @@ def instruction_ind_not_reg(instructions:list[str], inst:str) -> int:
         if inst.lower() in i.lower() and "0x" in inst:
             return ind
     return -1
-    #4 Conditions:
+
+"""
+Arith-G Conditions:
     #1. Call 
     #2. Jmp target before call address,
     #3. Check for use of conventional registers and instructions for vtable calls
     #4. __guard_dispatch_icall_fptr call (If true, add usability level by 1)
-    #5. (Planned) Check if the gadget matches the parameter and return type of another function for XFG
     #Disqualifiers: No ret, function too long, 
     #If CFG is not met, the confidence level goes down
+"""
 def is_arithg(instructions:list, addr_set, bin): 
     instructions_readable = convert_to_str_list(instructions)
     allowed_instrs:list[str] = ["mov", "lea", "add", "sub", "nop"]
@@ -151,12 +153,16 @@ def check_xfg(instructions:list[str], call_ind:int)->str:
             return instr.split(',')[1][1:]
     return "NULL"
 
-
-#BUG: the MLG must be the first entry of the vtable
+"""
+ML-G Criteria:
+    #1: Is there a VTABLE call?
+    #2: Is the jump after the call and does it go before the call, is it within the function?
+    #3: Is the call protected by CFG?
+    
 # Check for general loop gadgets in general, check if it is coming from a dispatch table or smth
+"""
 def is_mlg(instructions:list, addr_set, bin) -> [bool, int]:
     #Find the VTABLE where the start of the function base is mentioned
-
     instructions_readable = convert_to_str_list(instructions)
     if len(instructions_readable)==0:
         return [False, 0, "NULL"]
@@ -164,12 +170,8 @@ def is_mlg(instructions:list, addr_set, bin) -> [bool, int]:
         return [False, 0, "NULL"]
     if instruction_ind_reg(instructions_readable, 'CALL')==-1: #Make it contain a register
         return [False, 0, "NULL"]        
-    #if get_call_count(instructions_readable)!=1:
-    #    return [False, 0]
 
-    #1: Is there a VTABLE call?
-    #2: Is the jump after the call and does it go before the call, is it within the function?
-    #3 (Bonus): Is the call protected by CFG?
+
     conditionals:list[bool] = [False, False, False]
     usability:int = 0
 
@@ -191,24 +193,16 @@ def is_mlg(instructions:list, addr_set, bin) -> [bool, int]:
             drefin_instr:str = instr[start_ind:end_ind+1]
             if len(drefin_instr)==5 and len(drefin_instr.strip('[').strip(']')):
                 deref_markers+=1
-            #print(drefin_instr)
             dref_sp:list[str] = drefin_instr.split(" ")
             for dind, deref in enumerate(dref_sp):
-                if len(deref.strip('[').strip(']'))==3 and deref[0]=='[' and deref[-1]==']' '0x' not in deref: #esp+0x3
+                if len(deref.strip('[').strip(']'))==3 and deref[0]=='[' and deref[-1]==']' '0x' not in deref:
                     pass
             if deref_markers==1:
-                #If length of split==2, then get anything within []
-                #Get the first word after [ within [] on the last of split
-                #modified_regs.append(instr.split(" ")[1].split(",")[0].lower())#Isue
                 first_seg = instr.split(",")[0].lower() 
                 to_set = first_seg.split(' ')[1]
                 if 'word' in to_set:
                     print(f"WORD almost added to register in {instr}")
                     continue
-                #if '[' in first_seg:
-                #    within_brackets = first_seg[first_seg.find('['):]
-                #    within_no_brackets = within_brackets.strip('[').strip(']')
-                    #to_set = within_no_brackets.split(' ')[0]
                 modified_regs.append(to_set)#Isue
                 vtable_indexes.append(ind)
 
@@ -251,9 +245,7 @@ def is_mlg(instructions:list, addr_set, bin) -> [bool, int]:
                         #print(instr)
     
     call_addr = 0
-
-    #print(instructions_readable)
-
+    
     #Is there a virtual method called?
     #Check to make sure that the call is after the vtable function
     call_hash="NULL"
@@ -266,30 +258,18 @@ def is_mlg(instructions:list, addr_set, bin) -> [bool, int]:
                     #Check if the dereference contains guard
                     if reg in instr[instr.find(' '):] or "guard" in instr: #Sometimes the register is directly called and modified without updating the dereference
                         #Calls something dereferenced by a pointer
-                        #print("\n\nTRUE\n\n")
-
-                        #print(instructions[ind].getAddress())
-                        #print(reg)
                         conditionals[0] = True
                         call_addr = int(str(instructions[ind].getAddress()), 16)
-                        #print(int(str(instructions[ind].getAddress()), 16))
-                        #print(f"Call before: {instructions[ind].getAddress()}")
-
                         call_hash = check_xfg(instructions_readable, ind)
                         break
                     else:
                         if len(instr.split(' '))==4:
                             #Could be a variant of mov
-
                             cfg_reference_list = get_cfg_functions(bin.getCurrentProgram().getListing(), bin.getCurrentProgram().getFunctionManager().getFunctions(True), bin)[1]
                             if instr.split(' ')[3][0:3]=="[0x" and instr[instr.find('[')+3:instr.find(']')] in cfg_reference_list:#Remove the last and if needed
-                                #print("\n\nTRUE2\n\n")
                                 address = int(instr[instr.find('[')+1:instr.find(']')], 16)
-                                #print(instr[instr.find('[')+1:instr.find(']')])
                                 conditionals[0] = True
                                 call_addr = int(str(instructions[ind].getAddress()), 16)
-                                #print(int(str(instructions[ind].getAddress()), 16))
-                                #print(f"Call before: {instructions[ind].getAddress()}")
                                 call_hash = check_xfg(instructions_readable, ind)
                                 break
                 if not conditionals[0] and '[' in instr and ']' in instr:
