@@ -348,28 +348,34 @@ def is_inv_g_strict(instructions:list, addr_set, bin):
         for ind, instr in enumerate(instructions_readable[i:i+6], start=i):
             if instr.split(' ')[0].lower()!="mov":
                 continue
+                
             if ind>i+6:
                 break
+                
             if '[' in instr and ']' in instr:
                 start_ind = instr.find("[")
                 end_ind = instr.find("]")
 
                 deref_substr = instr[start_ind+1:end_ind] #Problem 2
                 deref_ind = ind
+                
                 for modified_reg in modified_regs:
                     if 'sp' in modified_reg.lower() or 'bp' in modified_reg.lower():
                         continue
+                        
                     #check the first split to see if it is a modified reegister
                     if len(deref_substr.split(' '))==3:
                         if modified_reg in deref_substr.split(' ')[0].lower() and '+' in deref_substr.split(' ')[1].lower() and deref_substr.split(' ')[2].lower()[0:2]=='0x' and int(deref_substr.split(' ')[2].lower(), 16)%4==0:
                             call_regs.append(instr.split(" ")[1].split(",")[0])
                             call_indexes.append(ind)
                             deref_inds.append(deref_ind)
+                            
                     elif modified_reg.lower() in deref_substr.lower():
                         call_regs.append(instr.split(",")[0].split(" ")[-1]) #Appends qword
                         call_indexes.append(ind)
                         deref_inds.append(deref_ind)
     call_addr = 0
+    
     #Is there a virtual method called?
     #Check to make sure that the call is after the vtable function
     call_hash="NULL"
@@ -463,21 +469,17 @@ def test_ghidra():
         print("[!] Ghidra Installation Not Found")
         print("\nPlease set your GHIDRA_INSTALL_DIR environment variable to your ghidra installation directory\nHint: If you are on Linux, run \'which ghidra\' to find the installation directrory")
         exit()
-    #Get the address of the VTABLE functions, then get the address of the call instruction,
-    #Get the function start address
 
-    #Now check for a jmp
-
-            #Now check for a dereference in a future instruction
-            #Check for proper dereferences
-            #Add a normal register and a multiply arch term that need to be found
-    #call_ind:int = instruction_index(instructions_readable, 'CALL')
-    #print(call_ind)
-    #print(instructions_readable)
-    #Check if register's move instruction has [r1 + arch*r2], if so, check if that register is dereferenced before a call instruction, check if the register that is dereferencing it is being called
-    #So Search for get inside the [] and see if it has 1 register + another register*arch, don't check what it is, only check what it is being moved to, then check if that is being dereferenced just with [], track all dereferences of it to see if the deref is called
-    #
-    #If there is a jump instruction, if it is > than the function base and < than the call, continue
+"""
+VFuncs:
+#Get the address of the VTABLE functions, then get the address of the call instruction,
+#Get the function start address
+#Check JMPs and dereferences
+#Add a normal register and a multiply arch term that need to be found
+#Check if register's move instruction has [r1 + arch*r2], if so, check if that register is dereferenced before a call instruction, check if the register that is dereferencing it is being called
+#So Search for get inside the [] and see if it has 1 register + another register*arch, don't check what it is, only check what it is being moved to, then check if that is being dereferenced just with [], track all dereferences of it to see if the deref is called
+#If there is a jump instruction, if it is > than the function base and < than the call, continue
+"""
 
 def get_vfuncs(program):
     manager = program.getFunctionManager()
@@ -502,7 +504,6 @@ def get_vfuncs(program):
                     nav_vtables = False
                     break
                 vtable_data = program.getListing().getDataAt(addie).getValue()
-                #print(vtable_data)
                 if vtable_data==None:
                     nav_vtables = False
                     break
@@ -511,7 +512,6 @@ def get_vfuncs(program):
                 virtual_offsets.append(hex(offset))
                 offset+=pointer_size
                 addie = addie.addWrap(pointer_size)
-    #print(virtual_functions)
     return [virtual_functions, virtual_tables, virtual_offsets]
 
 def is_virtual(virtual_functions, func):
@@ -537,7 +537,6 @@ def main() -> None:
     with pyhidra.open_program(f"{sys.argv[1]}") as bin: 
         program = bin.getCurrentProgram()
         vfuncs_list = get_vfuncs(program)
-        #print(vfuncs_list)
         manager = program.getFunctionManager()
         iterator = manager.getFunctions(True)
         virtual_functions = vfuncs_list[0]
