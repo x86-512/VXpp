@@ -550,8 +550,8 @@ def set_max_length() -> int:
     return max_len
 
 def main() -> None:
-    print("[+] Opening Ghidra...")
     test_ghidra()
+    print("[+] Opening Ghidra...")
     max_len:int = set_max_length()
     pyhidra.start()
     print("\n[+] Analyzing Binary...\n")
