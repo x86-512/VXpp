@@ -2,20 +2,6 @@ import pyhidra
 import sys
 import os
 
-#Remember to add XFG option
-#To bypass xfg, find a virtual function with the same hash
-
-############NOTES ON XFG#################
-#Get the old virtual function's parameters and return type and search other functions for those same specs
-#functiondb.getReturnType()
-#functiondb.getParameters()
-#Add xfg hashing function
-
-
-#Doesn't work
-#os.system("export GHIDRA_INSTALL_DIR=/usr/share/ghidra")
-#GHIDRA_INSTALL_DIR = os.getenv("GHIDRA_INSTALL_DIR")
-
 common_vtable_registers:list[str] = ["ax", "cx", "dx", "bx"]
 
 jump_instructions:list[str] = ["jmp", "jne", "je", "jo", "jno", "js", "jns", "jz", "jnz", "jb", "jnae", "jnb", "jc", "jae", "jnc", "jbe", "jna", "ja", "jnbe", "jl", "jnge", "jge", "jnl", "jle", "jg", "jnle", "jp", "jpe", "jnp", "jpo", "jcxz", "jecxz"]
