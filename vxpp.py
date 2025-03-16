@@ -550,6 +550,7 @@ def set_max_length() -> int:
     return max_len
 
 def main() -> None:
+    print("Virtual eXploiter++ v0.1.1\n")
     test_ghidra()
     print("[+] Opening Ghidra...")
     max_len:int = set_max_length()
