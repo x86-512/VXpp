@@ -474,7 +474,7 @@ def test_ghidra():
     if len(sys.argv)<2:
         print("Invalid arguments\nTry: python {} binary_name_here.exe".format(__file__.split("/")[-1]))
         print("Syntax: python3 file.py binary max_gadget_len arguments")
-        print("Example(s): \npython3 vxpp.py binary max_gadget_len ti\npython3 vxpp.py binary max_gadget_len")
+        print("Example(s): \npython3 vxpp.py binary max_gadget_len -ti\npython3 vxpp.py binary max_gadget_len")
         print("Possible Arguments\n-t - Include thunk functions\n-i - Less strict invoker vfgadgets\n")
         exit()
     try:
