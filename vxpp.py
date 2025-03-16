@@ -8,17 +8,6 @@ jump_instructions:list[str] = ["jmp", "jne", "je", "jo", "jno", "js", "jns", "jz
 
 x64_argument_regs = ["rcx", "rdx", "r8", "r9"]
 
-def dereference_pointer(listing, genericAddress):
-    pointer_size = genericAddress.getPointerSize()
-    print(pointer_size)
-    print(listing.getDataAt(genericAddress))
-    breakpoint()
-    address = ""
-    address += ""
-    for i in range(pointer_size-1):
-        address+=0
-
-
 def get_cfg_functions(listing, iterator, bin)->[list, str]:
     cfg_list = []
     cfg_reference_list = ""
@@ -152,7 +141,6 @@ def is_r64_g(instructions:list, addr_set):
             return [True, creg]
             
     return [False, ""]
-            
 
 def check_xfg(instructions:list[str], call_ind:int)->str:
     if call_ind>len(instructions) or call_ind-4<0:
@@ -192,18 +180,24 @@ def is_mlg(instructions:list, addr_set, bin) -> [bool, int]:
     call_indexes = []
     #For the modified_reg, the first instance needs to be just in [] of length 3 
     for ind, instr in enumerate(instructions_readable):
+        
         if 'sp' in instr.lower() or 'bp' in instr.lower():
             continue
+        
         if len(instr.split(','))<=1:
             continue
+        
         right_instr = instr.split(',')[1] 
         start_ind = right_instr.find("[")
         end_ind = right_instr.find("]")
+        
         if start_ind>-1 and end_ind>-1:
             deref_markers = 0
             drefin_instr:str = instr[start_ind:end_ind+1]
+            
             if len(drefin_instr)==5 and len(drefin_instr.strip('[').strip(']')):
                 deref_markers+=1
+                
             dref_sp:list[str] = drefin_instr.split(" ")
             for dind, deref in enumerate(dref_sp):
                 if len(deref.strip('[').strip(']'))==3 and deref[0]=='[' and deref[-1]==']' '0x' not in deref:
@@ -411,6 +405,7 @@ def is_inv_g_strict(instructions:list, addr_set, bin):
                             #Could be a variant of mov
 
                             cfg_reference_list = get_cfg_functions(bin.getCurrentProgram().getListing(), bin.getCurrentProgram().getFunctionManager().getFunctions(True), bin)[1]
+                            
                             if instr.split(' ')[3][0:3]=="[0x" and instr[instr.find('[')+3:instr.find(']')] in cfg_reference_list:#Remove the last and if needed
                                 address = int(instr[instr.find('[')+1:instr.find(']')], 16)
                                 conditionals[0] = True
@@ -422,6 +417,7 @@ def is_inv_g_strict(instructions:list, addr_set, bin):
                         start_sub = instr.find('[')
                         end_sub = instr.find(']')
                         deref_substr = instr[start_sub+1:end_sub]
+                        
                         if reg in deref_substr:
                             conditionals[0] = True
                             call_addr = int(str(instructions[ind].getAddress()), 16)
@@ -478,7 +474,8 @@ def test_ghidra():
     if len(sys.argv)<2:
         print("Invalid arguments\nTry: python {} binary_name_here.exe".format(__file__.split("/")[-1]))
         print("Syntax: python3 file.py binary max_gadget_len arguments")
-        print("Possible Arguments\nt - Include thunk functions\ni - Less strict invoker vfgadgets\n")
+        print("Example(s): \npython3 vxpp.py binary max_gadget_len ti\npython3 vxpp.py binary max_gadget_len")
+        print("Possible Arguments\n-t - Include thunk functions\n-i - Less strict invoker vfgadgets\n")
         exit()
     try:
         with open(f"{sys.argv[1]}", 'r') as file:
@@ -504,7 +501,6 @@ VFuncs:
 #So Search for get inside the [] and see if it has 1 register + another register*arch, don't check what it is, only check what it is being moved to, then check if that is being dereferenced just with [], track all dereferences of it to see if the deref is called
 #If there is a jump instruction, if it is > than the function base and < than the call, continue
 """
-
 def get_vfuncs(program):
     manager = program.getFunctionManager()
     s_table = program.getSymbolTable()
@@ -547,9 +543,10 @@ def is_virtual(virtual_functions, func):
 def set_max_length() -> int:
     max_len:int = 30
     try:
-        max_len=int(sys.argv[-1])
+        max_len=int(sys.argv[2])
     except ValueError:
         print("No instruction limit set, setting it to 30")
+        print("The instruction limit is the 2nd argument when running this script\nExample python3 vxpp.py 20")
     return max_len
 
 def main() -> None:
