@@ -92,13 +92,12 @@ def instruction_ind_not_reg(instructions:list[str], inst:str) -> int:
     return -1
 
 """
-Arith-G Conditions:
+ARITH-G Conditions:
     #1. Call 
     #2. Jmp target before call address,
     #3. Check for use of conventional registers and instructions for vtable calls
     #4. __guard_dispatch_icall_fptr call (If true, add usability level by 1)
-    #Disqualifiers: No ret, function too long, 
-    #If CFG is not met, the confidence level goes down
+    #Disqualifiers: No ret, function too long
 """
 def is_arithg(instructions:list, addr_set, bin): 
     instructions_readable = convert_to_str_list(instructions)
@@ -211,10 +210,8 @@ def is_mlg(instructions:list, addr_set, bin) -> [bool, int]:
         #It should be in the next 6 instructions
         #It should be a mov new_reg, [deref'd reg]
         for ind, instr in enumerate(instructions_readable[i:i+6], start=i):
-            #print(instr.split(' ')[0])
             if instr.split(' ')[0].lower()!="mov":
                 continue
-            #    print("Continuing: {instr}")
             if ind>i+6:
                 break
             if '[' in instr and ']' in instr:
@@ -225,7 +222,6 @@ def is_mlg(instructions:list, addr_set, bin) -> [bool, int]:
                 deref_ind = ind
 
                 for modified_reg in modified_regs:
-                    #print(modified_reg)
                     if 'sp' in modified_reg.lower() or 'bp' in modified_reg.lower():
                         continue
                     #check the first split to see if it is a modified reegister
@@ -234,16 +230,10 @@ def is_mlg(instructions:list, addr_set, bin) -> [bool, int]:
                             call_regs.append(instr.split(" ")[1].split(",")[0])
                             call_indexes.append(ind)
                             deref_inds.append(deref_ind)
-                            #print(call_regs)
-                            #breakpoint()
                     elif modified_reg.lower() in deref_substr.lower():
-                        #print("\n\n\nIT'S FINALLY TRUE :D\n\n\n")
-                        #if len(instr[start_ind+1:end_ind])==3 and instr[start_ind+1:end_ind].lower()==modified_reg:
                         call_regs.append(instr.split(",")[0].split(" ")[-1]) #Appends qword
                         call_indexes.append(ind)
-                        deref_inds.append(deref_ind)
-                        #print(instr)
-    
+                        deref_inds.append(deref_ind)    
     call_addr = 0
     
     #Is there a virtual method called?
@@ -287,20 +277,8 @@ def is_mlg(instructions:list, addr_set, bin) -> [bool, int]:
     for ind, i in enumerate(instructions_readable):
         for j in jump_instructions:
             if i.split(" ")[0].lower()==j:
-                #print("X")
-                #print(i)
-                #Try doing index of 0x up until you reach a space or ] or the end
-                #if len(i.split(' '))==2:
-                    #print(i.split(' ')[1][0:2]=='0x')
                 if len(i.split(' '))==2 and i.split(' ')[1][0:2]=='0x':
-                    #print("Y")
-                    # and '*' not in instr and '/' not in instr and '-' not in instr and '+' not in instr:
-                    #print(int(i.split(" ")[1], 16))
-                    #print(int("0x"+str(addr_set).split(',')[0][2:], 16))
-                    #print(int(i.split(" ")[1], 16)>=int("0x"+str(addr_set).split(',')[0][2:], 16))
-                    #print(int("0x"+str(addr_set).split(' ')[1].strip(']'), 16))
                     if (jump_target:=int(i.split(" ")[1], 16))>=int("0x"+str(addr_set).split(',')[0][2:], 16) and jump_target<=int("0x"+str(addr_set).split(' ')[1].strip(']'), 16):
-                        #print("\n\nTRUE 2\n\n")
                         conditionals[1] = True
                         jump_address = int(str(instructions[ind].getAddress()), 16)
                         jump_to = jump_target
@@ -309,14 +287,14 @@ def is_mlg(instructions:list, addr_set, bin) -> [bool, int]:
     if conditionals[0] and conditionals[1] and jump_to!=0 and call_addr!=0 and call_addr>=jump_to and call_addr<jump_address and verify_jump_to_instruction(instructions, jump_to):
         conditionals[2] = True
         
-
-        #if conditionals[0]==True:
-        #print("conditionals 0 is true")
-    #print(conditionals)
-    #print(f"Call: {call_addr}")
-    #print(f"Jump: {jump_to}")
     return [True if conditionals[0] and conditionals[1] and conditionals[2] else False, 0, call_hash] #usability not added yet
 
+"""
+INV-G (Strict) Criteria:
+    #1: Is there a VTABLE call?
+    #2: Is the jump after the call and does it go before the call, is it within the function?
+    #3 (Bonus): Is the call protected by CFG?
+"""
 def is_inv_g_strict(instructions:list, addr_set, bin):
 
     instructions_readable = convert_to_str_list(instructions)
@@ -326,12 +304,7 @@ def is_inv_g_strict(instructions:list, addr_set, bin):
         return [False, 0, "NULL"]
     if instruction_ind_reg(instructions_readable, 'CALL')==-1: #Make it contain a register
         return [False, 0, "NULL"]        
-    #if get_call_count(instructions_readable)!=1:
-    #    return [False, 0]
 
-    #1: Is there a VTABLE call?
-    #2: Is the jump after the call and does it go before the call, is it within the function?
-    #3 (Bonus): Is the call protected by CFG?
     conditionals:list[bool] = [False, False, False]
     usability:int = 0
 
@@ -353,33 +326,19 @@ def is_inv_g_strict(instructions:list, addr_set, bin):
             drefin_instr:str = instr[start_ind:end_ind+1]
             if len(drefin_instr)==5 and len(drefin_instr.strip('[').strip(']')):
                 deref_markers+=1
-            #print(drefin_instr)
             dref_sp:list[str] = drefin_instr.split(" ")
             for dind, deref in enumerate(dref_sp):
                 if len(deref.strip('[').strip(']'))==3 and deref[0]=='[' and deref[-1]==']' '0x' not in deref: #esp+0x3
-                    #print(deref.strip('[').strip(']'))
-                    #print('TRUE 1')
                     pass
-                    #deref_markers +=1
-                #elif '*' in deref:
-                    #print("TRUE 2")
-                    #deref_markers += 1
             if deref_markers==1:
                 #If length of split==2, then get anything within []
                 #Get the first word after [ within [] on the last of split
-                #modified_regs.append(instr.split(" ")[1].split(",")[0].lower())#Isue
                 first_seg = instr.split(",")[0].lower() 
                 to_set = first_seg.split(' ')[1]
                 if 'word' in to_set:
                     print(f"WORD almost added to register in {instr}")
                     continue
-                #print(to_set)
-                #if '[' in first_seg:
-                #    within_brackets = first_seg[first_seg.find('['):]
-                #    within_no_brackets = within_brackets.strip('[').strip(']')
-                    #to_set = within_no_brackets.split(' ')[0]
                 modified_regs.append(to_set)#Isue
-                #print(f"Modified {modified_regs}")
                 vtable_indexes.append(ind)
 
     deref_inds = []
@@ -387,10 +346,8 @@ def is_inv_g_strict(instructions:list, addr_set, bin):
         #It should be in the next 6 instructions
         #It should be a mov new_reg, [deref'd reg]
         for ind, instr in enumerate(instructions_readable[i:i+6], start=i):
-            #print(instr.split(' ')[0])
             if instr.split(' ')[0].lower()!="mov":
                 continue
-            #    print("Continuing: {instr}")
             if ind>i+6:
                 break
             if '[' in instr and ']' in instr:
@@ -400,7 +357,6 @@ def is_inv_g_strict(instructions:list, addr_set, bin):
                 deref_substr = instr[start_ind+1:end_ind] #Problem 2
                 deref_ind = ind
                 for modified_reg in modified_regs:
-                    #print(modified_reg)
                     if 'sp' in modified_reg.lower() or 'bp' in modified_reg.lower():
                         continue
                     #check the first split to see if it is a modified reegister
@@ -410,8 +366,6 @@ def is_inv_g_strict(instructions:list, addr_set, bin):
                             call_indexes.append(ind)
                             deref_inds.append(deref_ind)
                     elif modified_reg.lower() in deref_substr.lower():
-                        #print("\n\n\nIT'S FINALLY TRUE :D\n\n\n")
-                        #if len(instr[start_ind+1:end_ind])==3 and instr[start_ind+1:end_ind].lower()==modified_reg:
                         call_regs.append(instr.split(",")[0].split(" ")[-1]) #Appends qword
                         call_indexes.append(ind)
                         deref_inds.append(deref_ind)
@@ -438,13 +392,9 @@ def is_inv_g_strict(instructions:list, addr_set, bin):
 
                             cfg_reference_list = get_cfg_functions(bin.getCurrentProgram().getListing(), bin.getCurrentProgram().getFunctionManager().getFunctions(True), bin)[1]
                             if instr.split(' ')[3][0:3]=="[0x" and instr[instr.find('[')+3:instr.find(']')] in cfg_reference_list:#Remove the last and if needed
-                                #print("\n\nTRUE2\n\n")
                                 address = int(instr[instr.find('[')+1:instr.find(']')], 16)
-                                #print(instr[instr.find('[')+1:instr.find(']')])
                                 conditionals[0] = True
                                 call_addr = int(str(instructions[ind].getAddress()), 16)
-                                #print(int(str(instructions[ind].getAddress()), 16))
-                                #print(f"Call before: {instructions[ind].getAddress()}")
                                 call_hash = check_xfg(instructions_readable, ind)
                                 break
                 if not conditionals[0] and '[' in instr and ']' in instr:
@@ -536,8 +486,6 @@ def get_vfuncs(program):
     virtual_tables = []
     virtual_offsets = []
     for s in s_table.getAllSymbols(True):
-        #print(s)
-        #is_vftable = "v" in s.getName().lower() and "table" in s.getName().lower() #Hopefully it isn't some other random table with v in it
         if "vtable" in s.getName().lower() or "vftable" in s.getName().lower():
             addie = s.getAddress()
             vtable_address = s.getAddress()
